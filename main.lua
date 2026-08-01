@@ -152,7 +152,7 @@ local FarmStages = {
     Vector3.new(-50, 55, 5000),
     Vector3.new(-50, 55, 6000),
     Vector3.new(-50, 55, 7500),
-    Vector3.new(-50, -10, 8500),
+    Vector3.new(-50, 0, 8500),
     Vector3.new(-55, -360, 9500),
 }
 
