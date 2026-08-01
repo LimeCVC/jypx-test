@@ -22,7 +22,7 @@ end
 _G.Building = false
 _G.BuildDelay = 0.05
 _G.AutoFarm = false
-_G.FarmDuration = 35  -- Увеличил для медленного движения
+_G.FarmDuration = 25  -- Прежняя скорость
 _G.NoClip = false
 _G.Fly = false
 _G.FlySpeed = 50
@@ -37,6 +37,8 @@ local Cam = Workspace.CurrentCamera
 local PreviewModel = nil
 local isFarming = false
 local farmThread = nil
+local speedBoostActive = false
+local bhopActive = false
 
 --===================================================================================--
 -- [МОДУЛЬ 1: АВТО-БИЛД]
@@ -149,7 +151,7 @@ local function startBuild(fileName)
 end
 
 --===================================================================================--
--- [МОДУЛЬ 2: АВТОФАРМ С НОВЫМИ КООРДИНАТАМИ СУНДУКА]
+-- [МОДУЛЬ 2: АВТОФАРМ]
 --===================================================================================--
 local FarmStages = {
     Vector3.new(-50, 55, 200),
@@ -161,7 +163,7 @@ local FarmStages = {
     Vector3.new(-50, 55, 6000),
     Vector3.new(-50, 55, 7500),
     Vector3.new(-50, -10, 8500),
-    Vector3.new(-55, -360, 9500),  -- НОВЫЕ КООРДИНАТЫ СУНДУКА
+    Vector3.new(-55, -360, 9500),
 }
 
 local function startFarming()
@@ -175,7 +177,7 @@ local function startFarming()
     isFarming = true
     
     farmThread = task.spawn(function()
-        while _G.AutoFarm and isFarming do
+        while isFarming and _G.AutoFarm do
             -- Ждем появления персонажа
             local char = LocalPlayer.Character
             if not char then
@@ -195,7 +197,7 @@ local function startFarming()
             
             -- Проходим все точки
             for i, stagePos in ipairs(FarmStages) do
-                if not _G.AutoFarm or not isFarming then 
+                if not isFarming or not _G.AutoFarm then 
                     print("⏹️ Фарм остановлен")
                     break 
                 end
@@ -208,18 +210,14 @@ local function startFarming()
                 
                 hrp = LocalPlayer.Character.HumanoidRootPart
                 local distance = (hrp.Position - stagePos).Magnitude
+                local speed = math.max(distance / (_G.FarmDuration / #FarmStages), 10)
                 
-                -- Уменьшаем скорость для более плавного движения
-                local speed = math.max(distance / (_G.FarmDuration / #FarmStages), 8)
-                speed = math.min(speed, 25) -- Ограничиваем максимальную скорость
-                
-                -- Создаем BodyVelocity для движения
                 local bv = Instance.new("BodyVelocity")
                 bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
                 bv.Velocity = (stagePos - hrp.Position).Unit * speed
                 bv.Parent = hrp
                 
-                -- Включаем NoClip во время движения
+                -- NoClip во время движения
                 pcall(function()
                     for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
                         if part:IsA("BasePart") then 
@@ -230,7 +228,7 @@ local function startFarming()
                 
                 -- Ждем достижения точки
                 local timeout = 0
-                while (hrp.Position - stagePos).Magnitude > 15 and _G.AutoFarm and isFarming and LocalPlayer.Character do
+                while (hrp.Position - stagePos).Magnitude > 12 and isFarming and _G.AutoFarm and LocalPlayer.Character do
                     pcall(function()
                         for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
                             if part:IsA("BasePart") then part.CanCollide = false end
@@ -238,23 +236,20 @@ local function startFarming()
                     end)
                     task.wait(0.05)
                     timeout = timeout + 1
-                    if timeout > 400 then 
+                    if timeout > 300 then 
                         print("⚠️ Таймаут на точке " .. i)
                         break 
                     end
                 end
                 bv:Destroy()
-                
-                -- Небольшая задержка между точками
-                task.wait(0.1)
             end
             
             -- Достигли сундука
-            if _G.AutoFarm and isFarming then
+            if isFarming and _G.AutoFarm then
                 print("🎁 Достигли сундука! Ожидаем награду...")
-                task.wait(3)
+                task.wait(2.5)
                 
-                -- Убиваем персонажа для перерождения
+                -- Убиваем персонажа
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
                     print("💀 Перерождение...")
                     LocalPlayer.Character.Humanoid:BreakJoints()
@@ -275,15 +270,15 @@ end
 local function stopFarming()
     print("⏹️ Остановка фарма...")
     isFarming = false
+    _G.AutoFarm = false
     if farmThread then
         task.cancel(farmThread)
         farmThread = nil
     end
-    _G.AutoFarm = false
 end
 
 --===================================================================================--
--- [МОДУЛЬ 3: ЧИТЫ]
+-- [МОДУЛЬ 3: ЧИТЫ С ПРАВИЛЬНЫМ ВКЛ/ВЫКЛ]
 --===================================================================================--
 
 -- NoClip / Fly
@@ -319,33 +314,32 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Speed Boost (исправлен - теперь не выключается)
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-        if _G.SpeedBoost and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-            local hum = LocalPlayer.Character.Humanoid
-            if hum.WalkSpeed ~= _G.SpeedAmount then
-                hum.WalkSpeed = _G.SpeedAmount
-            end
+-- Speed Boost (правильное вкл/выкл)
+RunService.RenderStepped:Connect(function()
+    if _G.SpeedBoost and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local hum = LocalPlayer.Character.Humanoid
+        hum.WalkSpeed = _G.SpeedAmount
+    elseif LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local hum = LocalPlayer.Character.Humanoid
+        if hum.WalkSpeed ~= 16 then
+            hum.WalkSpeed = 16
         end
     end
 end)
 
--- BunnyHop
+-- BunnyHop (правильное вкл/выкл)
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
-    if _G.BHop and input.KeyCode == Enum.KeyCode.Space then
+    if input.KeyCode == Enum.KeyCode.Space and _G.BHop then
+        bhopActive = true
         task.spawn(function()
-            while UserInputService:IsKeyDown(Enum.KeyCode.Space) and _G.BHop do
+            while bhopActive and _G.BHop and UserInputService:IsKeyDown(Enum.KeyCode.Space) do
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
                     local hum = LocalPlayer.Character.Humanoid
                     local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    if hum and hrp then
-                        if hum.FloorMaterial ~= Enum.Material.Air then
-                            hrp.Velocity = Vector3.new(hrp.Velocity.X, _G.BhopJump, hrp.Velocity.Z)
-                            hum.WalkSpeed = _G.BhopSpeed
-                        end
+                    if hum and hrp and hum.FloorMaterial ~= Enum.Material.Air then
+                        hrp.Velocity = Vector3.new(hrp.Velocity.X, _G.BhopJump, hrp.Velocity.Z)
+                        hum.WalkSpeed = _G.BhopSpeed
                     end
                 end
                 task.wait(0.02)
@@ -354,16 +348,12 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- Wall Hack
-if _G.WallHack then
-    RunService.RenderStepped:Connect(function()
-        for _, part in ipairs(Workspace:GetDescendants()) do
-            if part:IsA("Part") and part.Transparency < 0.5 then
-                part.Transparency = 0.3
-            end
-        end
-    end)
-end
+UserInputService.InputEnded:Connect(function(input, gpe)
+    if gpe then return end
+    if input.KeyCode == Enum.KeyCode.Space then
+        bhopActive = false
+    end
+end)
 
 --===================================================================================--
 -- [МОДУЛЬ 4: GUI ИНТЕРФЕЙС]
@@ -375,7 +365,6 @@ ScreenGui.ResetOnSpawn = false
 pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
--- Главный фрейм
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 600, 0, 450)
@@ -391,7 +380,7 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
--- Шапка (БЕЛОЕ НАЗВАНИЕ, без Build a Boat)
+-- Шапка
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1, 0, 0, 40)
 TitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
@@ -406,14 +395,13 @@ local TitleLabel = Instance.new("TextLabel")
 TitleLabel.Text = "JYPX // V2.0"
 TitleLabel.Size = UDim2.new(1, -80, 1, 0)
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
-TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- БЕЛЫЙ
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Font = Enum.Font.GothamBold
 TitleLabel.TextSize = 18
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Parent = TitleBar
 
--- Кнопка закрытия
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Text = "✕"
 CloseBtn.Size = UDim2.new(0, 35, 0, 35)
@@ -425,7 +413,6 @@ CloseBtn.TextSize = 18
 CloseBtn.Parent = TitleBar
 CloseBtn.MouseButton1Click:Connect(function() ScreenGui:Destroy() end)
 
--- Кнопка свернуть
 local CollapseBtn = Instance.new("TextButton")
 CollapseBtn.Text = "−"
 CollapseBtn.Size = UDim2.new(0, 35, 0, 35)
@@ -436,7 +423,6 @@ CollapseBtn.Font = Enum.Font.GothamBold
 CollapseBtn.TextSize = 22
 CollapseBtn.Parent = TitleBar
 
--- Левая панель
 local SideBar = Instance.new("Frame")
 SideBar.Size = UDim2.new(0, 130, 1, -40)
 SideBar.Position = UDim2.new(0, 0, 0, 40)
@@ -452,14 +438,12 @@ local SideLayout = Instance.new("UIListLayout")
 SideLayout.Padding = UDim.new(0, 8)
 SideLayout.Parent = SideBar
 
--- Контейнер контента
 local ContentFrame = Instance.new("Frame")
 ContentFrame.Size = UDim2.new(1, -135, 1, -50)
 ContentFrame.Position = UDim2.new(0, 135, 0, 45)
 ContentFrame.BackgroundTransparency = 1
 ContentFrame.Parent = MainFrame
 
--- Создание страниц
 local BuildPage = Instance.new("ScrollingFrame")
 BuildPage.Size = UDim2.new(1, 0, 1, 0)
 BuildPage.BackgroundTransparency = 1
@@ -481,7 +465,6 @@ local ExploitLayout = Instance.new("UIListLayout")
 ExploitLayout.Padding = UDim.new(0, 8)
 ExploitLayout.Parent = ExploitsPage
 
--- Функции создания кнопок
 local function createButton(text, parent, callback, color)
     local btn = Instance.new("TextButton")
     btn.Text = text
@@ -524,7 +507,6 @@ local function createToggleButton(text, parent, getter, setter)
         setter(newState)
         updateUI()
         
-        -- Специальная обработка для AutoFarm
         if text:find("Auto Farm") then
             if newState then
                 startFarming()
@@ -538,44 +520,16 @@ local function createToggleButton(text, parent, getter, setter)
 end
 
 -- Кнопки вкладки BUILD
-createButton("📦 Safe Build (Сохранить)", BuildPage, function() 
-    safeBuild("myship") 
-end, Color3.fromRGB(30, 40, 60))
-
-createButton("👁️ Preview (Предпросмотр)", BuildPage, function() 
-    previewBuild("myship") 
-end, Color3.fromRGB(30, 50, 50))
-
-createButton("🏗️ Build (Начать постройку)", BuildPage, function() 
-    startBuild("myship") 
-end, Color3.fromRGB(30, 60, 40))
-
-createButton("⏹️ Stop Build (Остановить)", BuildPage, function() 
-    _G.Building = false 
-    clearPreview() 
-    print("⏹️ Строительство остановлено")
-end, Color3.fromRGB(60, 30, 30))
+createButton("📦 Safe Build (Сохранить)", BuildPage, function() safeBuild("myship") end, Color3.fromRGB(30, 40, 60))
+createButton("👁️ Preview (Предпросмотр)", BuildPage, function() previewBuild("myship") end, Color3.fromRGB(30, 50, 50))
+createButton("🏗️ Build (Начать постройку)", BuildPage, function() startBuild("myship") end, Color3.fromRGB(30, 60, 40))
+createButton("⏹️ Stop Build (Остановить)", BuildPage, function() _G.Building = false clearPreview() print("⏹️ Строительство остановлено") end, Color3.fromRGB(60, 30, 30))
 
 -- Кнопки вкладки EXPLOITS
-createToggleButton("🔄 Auto Farm", ExploitsPage, 
-    function() return _G.AutoFarm end, 
-    function(v) _G.AutoFarm = v end
-)
-
-createToggleButton("✈️ Fly + NoClip", ExploitsPage, 
-    function() return _G.Fly end, 
-    function(v) _G.Fly = v _G.NoClip = v end
-)
-
-createToggleButton("🦘 BunnyHop", ExploitsPage, 
-    function() return _G.BHop end, 
-    function(v) _G.BHop = v end
-)
-
-createToggleButton("💨 Speed Boost", ExploitsPage, 
-    function() return _G.SpeedBoost end, 
-    function(v) _G.SpeedBoost = v end
-)
+createToggleButton("🔄 Auto Farm", ExploitsPage, function() return _G.AutoFarm end, function(v) _G.AutoFarm = v end)
+createToggleButton("✈️ Fly + NoClip", ExploitsPage, function() return _G.Fly end, function(v) _G.Fly = v _G.NoClip = v end)
+createToggleButton("🦘 BunnyHop", ExploitsPage, function() return _G.BHop end, function(v) _G.BHop = v end)
+createToggleButton("💨 Speed Boost", ExploitsPage, function() return _G.SpeedBoost end, function(v) _G.SpeedBoost = v end)
 
 createButton("🎯 Teleport to Chest", ExploitsPage, function()
     local chest = nil
@@ -597,7 +551,6 @@ createButton("🎯 Teleport to Chest", ExploitsPage, function()
     end
 end, Color3.fromRGB(60, 40, 20))
 
--- Кнопки вкладок
 local function createTabButton(text, parent, callback)
     local btn = Instance.new("TextButton")
     btn.Text = text
@@ -616,17 +569,9 @@ local function createTabButton(text, parent, callback)
     return btn
 end
 
-createTabButton("🏗️ BUILD", SideBar, function() 
-    BuildPage.Visible = true 
-    ExploitsPage.Visible = false 
-end)
+createTabButton("🏗️ BUILD", SideBar, function() BuildPage.Visible = true ExploitsPage.Visible = false end)
+createTabButton("⚡ EXPLOITS", SideBar, function() BuildPage.Visible = false ExploitsPage.Visible = true end)
 
-createTabButton("⚡ EXPLOITS", SideBar, function() 
-    BuildPage.Visible = false 
-    ExploitsPage.Visible = true 
-end)
-
--- Логика сворачивания
 local isCollapsed = false
 local originalHeight = 450
 
@@ -649,4 +594,4 @@ end)
 
 print("✅ JYPX // V2.0 успешно загружен!")
 print("🎯 Фарм настроен на сундук: -55, -360, 9500")
-print("📌 Используйте GUI для управления")
+print("📌 Все функции корректно включаются и выключаются")
