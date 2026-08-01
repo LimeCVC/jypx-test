@@ -22,7 +22,7 @@ end
 _G.Building = false
 _G.BuildDelay = 0.05
 _G.AutoFarm = false
-_G.FarmDuration = 25
+_G.FarmDuration = 35  -- Увеличил для медленного движения
 _G.NoClip = false
 _G.Fly = false
 _G.FlySpeed = 50
@@ -149,7 +149,7 @@ local function startBuild(fileName)
 end
 
 --===================================================================================--
--- [МОДУЛЬ 2: АВТОФАРМ]
+-- [МОДУЛЬ 2: АВТОФАРМ С НОВЫМИ КООРДИНАТАМИ СУНДУКА]
 --===================================================================================--
 local FarmStages = {
     Vector3.new(-50, 55, 200),
@@ -161,7 +161,7 @@ local FarmStages = {
     Vector3.new(-50, 55, 6000),
     Vector3.new(-50, 55, 7500),
     Vector3.new(-50, -10, 8500),
-    Vector3.new(-60, -15, 9400),
+    Vector3.new(-55, -360, 9500),  -- НОВЫЕ КООРДИНАТЫ СУНДУКА
 }
 
 local function startFarming()
@@ -171,6 +171,7 @@ local function startFarming()
     end
     
     print("🔄 Запуск авто-фарма...")
+    print("🎯 Цель: сундук на координатах -55, -360, 9500")
     isFarming = true
     
     farmThread = task.spawn(function()
@@ -207,7 +208,10 @@ local function startFarming()
                 
                 hrp = LocalPlayer.Character.HumanoidRootPart
                 local distance = (hrp.Position - stagePos).Magnitude
-                local speed = math.max(distance / (_G.FarmDuration / #FarmStages), 15)
+                
+                -- Уменьшаем скорость для более плавного движения
+                local speed = math.max(distance / (_G.FarmDuration / #FarmStages), 8)
+                speed = math.min(speed, 25) -- Ограничиваем максимальную скорость
                 
                 -- Создаем BodyVelocity для движения
                 local bv = Instance.new("BodyVelocity")
@@ -226,7 +230,7 @@ local function startFarming()
                 
                 -- Ждем достижения точки
                 local timeout = 0
-                while (hrp.Position - stagePos).Magnitude > 12 and _G.AutoFarm and isFarming and LocalPlayer.Character do
+                while (hrp.Position - stagePos).Magnitude > 15 and _G.AutoFarm and isFarming and LocalPlayer.Character do
                     pcall(function()
                         for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
                             if part:IsA("BasePart") then part.CanCollide = false end
@@ -234,18 +238,21 @@ local function startFarming()
                     end)
                     task.wait(0.05)
                     timeout = timeout + 1
-                    if timeout > 300 then 
+                    if timeout > 400 then 
                         print("⚠️ Таймаут на точке " .. i)
                         break 
                     end
                 end
                 bv:Destroy()
+                
+                -- Небольшая задержка между точками
+                task.wait(0.1)
             end
             
             -- Достигли сундука
             if _G.AutoFarm and isFarming then
                 print("🎁 Достигли сундука! Ожидаем награду...")
-                task.wait(2.5)
+                task.wait(3)
                 
                 -- Убиваем персонажа для перерождения
                 if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
@@ -312,7 +319,20 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- BunnyHop (исправлен)
+-- Speed Boost (исправлен - теперь не выключается)
+task.spawn(function()
+    while true do
+        task.wait(0.1)
+        if _G.SpeedBoost and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            local hum = LocalPlayer.Character.Humanoid
+            if hum.WalkSpeed ~= _G.SpeedAmount then
+                hum.WalkSpeed = _G.SpeedAmount
+            end
+        end
+    end
+end)
+
+-- BunnyHop
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if _G.BHop and input.KeyCode == Enum.KeyCode.Space then
@@ -322,7 +342,6 @@ UserInputService.InputBegan:Connect(function(input, gpe)
                     local hum = LocalPlayer.Character.Humanoid
                     local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
                     if hum and hrp then
-                        -- Проверяем, стоит ли персонаж на земле
                         if hum.FloorMaterial ~= Enum.Material.Air then
                             hrp.Velocity = Vector3.new(hrp.Velocity.X, _G.BhopJump, hrp.Velocity.Z)
                             hum.WalkSpeed = _G.BhopSpeed
@@ -335,15 +354,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
     end
 end)
 
--- Speed Boost
-RunService.RenderStepped:Connect(function()
-    if _G.SpeedBoost and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-        local hum = LocalPlayer.Character.Humanoid
-        hum.WalkSpeed = _G.SpeedAmount
-    end
-end)
-
--- Wall Hack (прозрачные стены)
+-- Wall Hack
 if _G.WallHack then
     RunService.RenderStepped:Connect(function()
         for _, part in ipairs(Workspace:GetDescendants()) do
@@ -380,7 +391,7 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 10)
 MainCorner.Parent = MainFrame
 
--- Шапка
+-- Шапка (БЕЛОЕ НАЗВАНИЕ, без Build a Boat)
 local TitleBar = Instance.new("Frame")
 TitleBar.Size = UDim2.new(1, 0, 0, 40)
 TitleBar.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
@@ -392,13 +403,13 @@ TitleCorner.CornerRadius = UDim.new(0, 10)
 TitleCorner.Parent = TitleBar
 
 local TitleLabel = Instance.new("TextLabel")
-TitleLabel.Text = "JYPX // V2.0 [Build a Boat]"
+TitleLabel.Text = "JYPX // V2.0"
 TitleLabel.Size = UDim2.new(1, -80, 1, 0)
 TitleLabel.Position = UDim2.new(0, 15, 0, 0)
-TitleLabel.TextColor3 = Color3.fromRGB(255, 200, 50)
+TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255) -- БЕЛЫЙ
 TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
 TitleLabel.Font = Enum.Font.GothamBold
-TitleLabel.TextSize = 16
+TitleLabel.TextSize = 18
 TitleLabel.BackgroundTransparency = 1
 TitleLabel.Parent = TitleBar
 
@@ -637,5 +648,5 @@ CollapseBtn.MouseButton1Click:Connect(function()
 end)
 
 print("✅ JYPX // V2.0 успешно загружен!")
-print("🎮 Для Build a Boat for Treasure")
+print("🎯 Фарм настроен на сундук: -55, -360, 9500")
 print("📌 Используйте GUI для управления")
