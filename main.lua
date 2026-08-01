@@ -10,6 +10,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
 
 -- Проверка и создание папки для сохранений в файловой системе эксплоита
 if not isfolder("jypxBuild") then
@@ -17,7 +18,7 @@ if not isfolder("jypxBuild") then
 end
 
 --===================================================================================--
--- [ГЛОБАЛЬНЫЕ НАСТРОЙКИ И ФЛАГИ СОСТОЯНИЯ ЧИТА]
+-- [ГЛОБАЛЬНЫЕ НАСТРОЙКИ И ФЛАГИ СОСТОЯНИЯ]
 --===================================================================================--
 _G.Building = false
 _G.BuildDelay = 0.05
@@ -44,8 +45,12 @@ local function sanitizeColor(color) return {color.R, color.G, color.B} end
 
 -- Функция экспорта (Safe Build)
 local function safeBuild(fileName)
-    local targetFolder = Workspace:FindFirstChild("jypxBuild") or Workspace.Plots:FindFirstChild(LocalPlayer.Name)
+    local targetFolder = Workspace:FindFirstChild("jypxBuild") or Workspace:FindFirstChild("Plots")
+    if targetFolder and targetFolder:FindFirstChild(LocalPlayer.Name) then
+        targetFolder = targetFolder[LocalPlayer.Name]
+    end
     if not targetFolder then return end
+    
     local blocksData = {}
     for _, block in ipairs(targetFolder:GetDescendants()) do
         if block:IsA("BasePart") then
@@ -105,6 +110,10 @@ local function startBuild(fileName)
     local success, content = pcall(function() return readfile("jypxBuild/" .. fileName .. ".build") end)
     if not success then _G.Building = false return end
     local blocksData = HttpService:JSONDecode(content)
+    
+    local plotFolder = Workspace:FindFirstChild("Plots")
+    local playerPlot = plotFolder and plotFolder:FindFirstChild(LocalPlayer.Name)
+    
     for _, data in ipairs(blocksData) do
         if not _G.Building then break end
         pcall(function()
@@ -113,10 +122,10 @@ local function startBuild(fileName)
             part.Size = Vector3.new(unpack(data.Size))
             part.CFrame = toCFrame(data.Position)
             part.Color = Color3.new(unpack(data.Color))
-            part.Transparency = data.Transparency
+            part.Transparency = data.Transparency or 0
             part.CanCollide = data.CanCollide
             part.Anchored = data.Anchored
-            part.Parent = Workspace.Plots:FindFirstChild(LocalPlayer.Name) or Workspace
+            part.Parent = playerPlot or Workspace
         end)
         task.wait(_G.BuildDelay)
     end
@@ -139,9 +148,10 @@ local FarmStages = {
     Vector3.new(-60, -15, 9400), -- Залет прямо к сундуку в пещеру
 }
 
+-- Отдельный поток для авто-фарма
 task.spawn(function()
     while true do
-        task.wait(1)
+        task.wait(0.5)
         if _G.AutoFarm and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
             local hrp = LocalPlayer.Character.HumanoidRootPart
             
@@ -149,488 +159,35 @@ task.spawn(function()
                 if not _G.AutoFarm then break end
                 
                 local distance = (hrp.Position - stagePos).Magnitude
-                local speed = distance / (_G.FarmDuration / #FarmStages)
+                local speed = math.max(distance / (_G.FarmDuration / #FarmStages), 10)
                 
                 local bv = Instance.new("BodyVelocity")
                 bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
                 bv.Velocity = (stagePos - hrp.Position).Unit * speed
                 bv.Parent = hrp
                 
-                while (hrp.Position - stagePos).Magnitude > 12 and _G.AutoFarm do
+                local timeout = 0
+                while (hrp.Position - stagePos).Magnitude > 12 and _G.AutoFarm and timeout < 200 do
                     pcall(function()
                         for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
                             if part:IsA("BasePart") then part.CanCollide = false end
                         end
                     end)
                     task.wait(0.05)
-                end
-                bv:Destroy()
-            end
-            
-           if _G.AutoFarm then
-    task.wait(2.5)
-
-    LocalPlayer.Character.Humanoid:BreakJoints()
-    LocalPlayer.CharacterAdded:Wait()
-
-    repeat
-        task.wait()
-    until LocalPlayer.Character
-        and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-
-    task.wait(1)
-
-    -- сразу начать следующий цикл
-    continue
-end
-        end
-    end
-end)
-
---===================================================================================--
--- [МОДУЛЬ 3: ДВИЖЕНИЯ И ЧИТЫ (FLY, NO-CLIP, BHOP)]
---===================================================================================--
-RunService.Stepped:Connect(function()
-    if (_G.NoClip or _G.Fly) and LocalPlayer.Character then
-        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
-        end
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if _G.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        local cf = Cam.CFrame
-        local move = Vector3.zero
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + cf.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move - cf.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move - cf.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + cf.RightVector end
-        hrp.Velocity = move * _G.FlySpeed
-    end
-end)
-
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if _G.BHop and input.KeyCode == Enum.KeyCode.Space then
-        while UserInputService:IsKeyDown(Enum.KeyCode.Space) and _G.BHop do
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                local hum = LocalPlayer.Character.Humanoid
-                if hum.FloorMaterial ~= Enum.Material.Air then
-                    LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(LocalPlayer.Character.HumanoidRootPart.Velocity.X, _G.BhopJump, LocalPlayer.Character.HumanoidRootPart.Velocity.Z)
-                    hum.WalkSpeed = _G.BhopSpeed
-                end
-            end
-            task.wait(0.02)
-        end
-    end
-end)
---===================================================================================--
---                             JYPX // V1.1 - BUILD A BOAT FOR TREASURE               --
---===================================================================================--
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Workspace = game:GetService("Workspace")
-local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local TeleportService = game:GetService("TeleportService")
-
--- Проверка и создание папки для сохранений в файловой системе эксплоита
-if not isfolder("jypxBuild") then
-    makefolder("jypxBuild")
-end
-
---===================================================================================--
--- [ГЛОБАЛЬНЫЕ НАСТРОЙКИ И ФЛАГИ СОСТОЯНИЯ ЧИТА]
---===================================================================================--
-_G.Building = false
-_G.BuildDelay = 0.05
-_G.AutoFarm = false
-_G.FarmDuration = 25 -- Оптимальное время пролета стадий в секундах
-_G.NoClip = false
-_G.Fly = false
-_G.FlySpeed = 50
-_G.BHop = false
-_G.BhopSpeed = 25
-_G.BhopJump = 40
-_G.ESP_Enabled = false
-
-local Cam = Workspace.CurrentCamera
-local PreviewModel = nil
-
---===================================================================================--
--- [МОДУЛЬ 1: АВТО-БИЛД (ЛОГИКА И СЕРИАЛИЗАЦИЯ ДАННЫХ)]
---===================================================================================--
-
-local function sanitizeCFrame(cf) return {cf:GetComponents()} end
-local function toCFrame(tbl) return CFrame.new(unpack(tbl)) end
-local function sanitizeColor(color) return {color.R, color.G, color.B} end
-
--- Функция экспорта (Safe Build)
-local function safeBuild(fileName)
-    local targetFolder = Workspace:FindFirstChild("jypxBuild") or Workspace.Plots:FindFirstChild(LocalPlayer.Name)
-    if not targetFolder then return end
-    local blocksData = {}
-    for _, block in ipairs(targetFolder:GetDescendants()) do
-        if block:IsA("BasePart") then
-            pcall(function()
-                table.insert(blocksData, {
-                    ID = block:GetAttribute("BlockID") or block.Name,
-                    Name = block.Name,
-                    Position = sanitizeCFrame(block.CFrame),
-                    Size = {block.Size.X, block.Size.Y, block.Size.Z},
-                    Color = sanitizeColor(block.Color),
-                    Transparency = block.Transparency,
-                    Anchored = block.Anchored,
-                    CanCollide = block.CanCollide
-                })
-            end)
-        end
-    end
-    writefile("jypxBuild/" .. fileName .. ".build", HttpService:JSONEncode(blocksData))
-end
-
--- Удаление старого превью
-local function clearPreview()
-    if PreviewModel then PreviewModel:Destroy() PreviewModel = nil end
-end
-
--- Функция предпросмотра (Preview)
-local function previewBuild(fileName)
-    clearPreview()
-    local success, content = pcall(function() return readfile("jypxBuild/" .. fileName .. ".build") end)
-    if not success then return end
-    local blocksData = HttpService:JSONDecode(content)
-    PreviewModel = Instance.new("Model")
-    PreviewModel.Name = "JYPX_Preview"
-    PreviewModel.Parent = Workspace
-
-    local hl = Instance.new("Highlight")
-    hl.FillColor = Color3.fromRGB(0, 255, 255)
-    hl.FillTransparency = 0.5
-    hl.OutlineTransparency = 0.2
-    hl.Parent = PreviewModel
-
-    for _, data in ipairs(blocksData) do
-        local part = Instance.new("Part")
-        part.Size = Vector3.new(unpack(data.Size))
-        part.CFrame = toCFrame(data.Position)
-        part.Color = Color3.new(unpack(data.Color))
-        part.Transparency = 0.5
-        part.CanCollide = false
-        part.Anchored = true
-        part.Parent = PreviewModel
-    end
-end
-
--- Функция постройки (Build)
-local function startBuild(fileName)
-    _G.Building = true
-    local success, content = pcall(function() return readfile("jypxBuild/" .. fileName .. ".build") end)
-    if not success then _G.Building = false return end
-    local blocksData = HttpService:JSONDecode(content)
-    for _, data in ipairs(blocksData) do
-        if not _G.Building then break end
-        pcall(function()
-            local part = Instance.new("Part")
-            part.Name = data.Name
-            part.Size = Vector3.new(unpack(data.Size))
-            part.CFrame = toCFrame(data.Position)
-            part.Color = Color3.new(unpack(data.Color))
-            part.Transparency = data.Transparency
-            part.CanCollide = data.CanCollide
-            part.Anchored = data.Anchored
-            part.Parent = Workspace.Plots:FindFirstChild(LocalPlayer.Name) or Workspace
-        end)
-        task.wait(_G.BuildDelay)
-    end
-    _G.Building = false
-end
-
---===================================================================================--
--- [МОДУЛЬ 2: АВТОФАРМ С АВТО-СПУСКОМ ПОД ВОДОПАД]
---===================================================================================--
-local FarmStages = {
-    Vector3.new(-50, 55, 200),
-    Vector3.new(-50, 55, 1000),
-    Vector3.new(-50, 55, 2000),
-    Vector3.new(-50, 55, 3000),
-    Vector3.new(-50, 55, 4000),
-    Vector3.new(-50, 55, 5000),
-    Vector3.new(-50, 55, 6000),
-    Vector3.new(-50, 55, 7500),  -- Финал верхней стадии перед обрывом
-    Vector3.new(-50, -10, 8500), -- КРИТИЧЕСКИЙ СПУСК: Уходим по высоте Y вниз под водопад
-    Vector3.new(-60, -15, 9400), -- Залет прямо к сундуку в пещеру
-}
-
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if _G.AutoFarm and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = LocalPlayer.Character.HumanoidRootPart
-            
-            for _, stagePos in ipairs(FarmStages) do
-                if not _G.AutoFarm then break end
-                
-                local distance = (hrp.Position - stagePos).Magnitude
-                local speed = distance / (_G.FarmDuration / #FarmStages)
-                
-                local bv = Instance.new("BodyVelocity")
-                bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-                bv.Velocity = (stagePos - hrp.Position).Unit * speed
-                bv.Parent = hrp
-                
-                while (hrp.Position - stagePos).Magnitude > 12 and _G.AutoFarm do
-                    pcall(function()
-                        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                            if part:IsA("BasePart") then part.CanCollide = false end
-                        end
-                    end)
-                    task.wait(0.05)
-                end
-                bv:Destroy()
-            end
-            
-       if _G.AutoFarm then
-    task.wait(2)
-
-    local character = LocalPlayer.Character
-    if character and character:FindFirstChild("Humanoid") then
-        character.Humanoid:BreakJoints()
-    end
-
-    LocalPlayer.CharacterAdded:Wait()
-
-    repeat
-        task.wait(0.1)
-    until LocalPlayer.Character
-        and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-
-    task.wait(1)
-end
-        end
-    end
-end)
-
---===================================================================================--
--- [МОДУЛЬ 3: ДВИЖЕНИЯ И ЧИТЫ (FLY, NO-CLIP, BHOP)]
---===================================================================================--
-RunService.Stepped:Connect(function()
-    if (_G.NoClip or _G.Fly) and LocalPlayer.Character then
-        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
-        end
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if _G.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        local cf = Cam.CFrame
-        local move = Vector3.zero
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + cf.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move - cf.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move - cf.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + cf.RightVector end
-        hrp.Velocity = move * _G.FlySpeed
-    end
-end)
-
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if _G.BHop and input.KeyCode == Enum.KeyCode.Space then
-        while UserInputService:IsKeyDown(Enum.KeyCode.Space) and _G.BHop do
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                local hum = LocalPlayer.Character.Humanoid
-                if hum.FloorMaterial ~= Enum.Material.Air then
-                    LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(LocalPlayer.Character.HumanoidRootPart.Velocity.X, _G.BhopJump, LocalPlayer.Character.HumanoidRootPart.Velocity.Z)
-                    hum.WalkSpeed = _G.BhopSpeed
-                end
-            end
-            task.wait(0.02)
-        end
-    end
-end)
---===================================================================================--
---                             JYPX // V1.1 - BUILD A BOAT FOR TREASURE               --
---===================================================================================--
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Workspace = game:GetService("Workspace")
-local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local TeleportService = game:GetService("TeleportService")
-
--- Проверка и создание папки для сохранений в файловой системе эксплоита
-if not isfolder("jypxBuild") then
-    makefolder("jypxBuild")
-end
-
---===================================================================================--
--- [ГЛОБАЛЬНЫЕ НАСТРОЙКИ И ФЛАГИ СОСТОЯНИЯ ЧИТА]
---===================================================================================--
-_G.Building = false
-_G.BuildDelay = 0.05
-_G.AutoFarm = false
-_G.FarmDuration = 25 -- Оптимальное время пролета стадий в секундах
-_G.NoClip = false
-_G.Fly = false
-_G.FlySpeed = 50
-_G.BHop = false
-_G.BhopSpeed = 25
-_G.BhopJump = 40
-_G.ESP_Enabled = false
-
-local Cam = Workspace.CurrentCamera
-local PreviewModel = nil
-
---===================================================================================--
--- [МОДУЛЬ 1: АВТО-БИЛД (ЛОГИКА И СЕРИАЛИЗАЦИЯ ДАННЫХ)]
---===================================================================================--
-
-local function sanitizeCFrame(cf) return {cf:GetComponents()} end
-local function toCFrame(tbl) return CFrame.new(unpack(tbl)) end
-local function sanitizeColor(color) return {color.R, color.G, color.B} end
-
--- Функция экспорта (Safe Build)
-local function safeBuild(fileName)
-    local targetFolder = Workspace:FindFirstChild("jypxBuild") or Workspace.Plots:FindFirstChild(LocalPlayer.Name)
-    if not targetFolder then return end
-    local blocksData = {}
-    for _, block in ipairs(targetFolder:GetDescendants()) do
-        if block:IsA("BasePart") then
-            pcall(function()
-                table.insert(blocksData, {
-                    ID = block:GetAttribute("BlockID") or block.Name,
-                    Name = block.Name,
-                    Position = sanitizeCFrame(block.CFrame),
-                    Size = {block.Size.X, block.Size.Y, block.Size.Z},
-                    Color = sanitizeColor(block.Color),
-                    Transparency = block.Transparency,
-                    Anchored = block.Anchored,
-                    CanCollide = block.CanCollide
-                })
-            end)
-        end
-    end
-    writefile("jypxBuild/" .. fileName .. ".build", HttpService:JSONEncode(blocksData))
-end
-
--- Удаление старого превью
-local function clearPreview()
-    if PreviewModel then PreviewModel:Destroy() PreviewModel = nil end
-end
-
--- Функция предпросмотра (Preview)
-local function previewBuild(fileName)
-    clearPreview()
-    local success, content = pcall(function() return readfile("jypxBuild/" .. fileName .. ".build") end)
-    if not success then return end
-    local blocksData = HttpService:JSONDecode(content)
-    PreviewModel = Instance.new("Model")
-    PreviewModel.Name = "JYPX_Preview"
-    PreviewModel.Parent = Workspace
-
-    local hl = Instance.new("Highlight")
-    hl.FillColor = Color3.fromRGB(0, 255, 255)
-    hl.FillTransparency = 0.5
-    hl.OutlineTransparency = 0.2
-    hl.Parent = PreviewModel
-
-    for _, data in ipairs(blocksData) do
-        local part = Instance.new("Part")
-        part.Size = Vector3.new(unpack(data.Size))
-        part.CFrame = toCFrame(data.Position)
-        part.Color = Color3.new(unpack(data.Color))
-        part.Transparency = 0.5
-        part.CanCollide = false
-        part.Anchored = true
-        part.Parent = PreviewModel
-    end
-end
-
--- Функция постройки (Build)
-local function startBuild(fileName)
-    _G.Building = true
-    local success, content = pcall(function() return readfile("jypxBuild/" .. fileName .. ".build") end)
-    if not success then _G.Building = false return end
-    local blocksData = HttpService:JSONDecode(content)
-    for _, data in ipairs(blocksData) do
-        if not _G.Building then break end
-        pcall(function()
-            local part = Instance.new("Part")
-            part.Name = data.Name
-            part.Size = Vector3.new(unpack(data.Size))
-            part.CFrame = toCFrame(data.Position)
-            part.Color = Color3.new(unpack(data.Color))
-            part.Transparency = data.Transparency
-            part.CanCollide = data.CanCollide
-            part.Anchored = data.Anchored
-            part.Parent = Workspace.Plots:FindFirstChild(LocalPlayer.Name) or Workspace
-        end)
-        task.wait(_G.BuildDelay)
-    end
-    _G.Building = false
-end
-
---===================================================================================--
--- [МОДУЛЬ 2: АВТОФАРМ С АВТО-СПУСКОМ ПОД ВОДОПАД]
---===================================================================================--
-local FarmStages = {
-    Vector3.new(-50, 55, 200),
-    Vector3.new(-50, 55, 1000),
-    Vector3.new(-50, 55, 2000),
-    Vector3.new(-50, 55, 3000),
-    Vector3.new(-50, 55, 4000),
-    Vector3.new(-50, 55, 5000),
-    Vector3.new(-50, 55, 6000),
-    Vector3.new(-50, 55, 7500),  -- Финал верхней стадии перед обрывом
-    Vector3.new(-50, -10, 8500), -- КРИТИЧЕСКИЙ СПУСК: Уходим по высоте Y вниз под водопад
-    Vector3.new(-60, -15, 9400), -- Залет прямо к сундуку в пещеру
-}
-
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if _G.AutoFarm and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = LocalPlayer.Character.HumanoidRootPart
-            
-            for _, stagePos in ipairs(FarmStages) do
-                if not _G.AutoFarm then break end
-                
-                local distance = (hrp.Position - stagePos).Magnitude
-                local speed = distance / (_G.FarmDuration / #FarmStages)
-                
-                local bv = Instance.new("BodyVelocity")
-                bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-                bv.Velocity = (stagePos - hrp.Position).Unit * speed
-                bv.Parent = hrp
-                
-                while (hrp.Position - stagePos).Magnitude > 12 and _G.AutoFarm do
-                    pcall(function()
-                        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                            if part:IsA("BasePart") then part.CanCollide = false end
-                        end
-                    end)
-                    task.wait(0.05)
+                    timeout = timeout + 1
                 end
                 bv:Destroy()
             end
             
             if _G.AutoFarm then
                 task.wait(2.5) -- Тайм-аут на сбор награды из сундука
-                if LocalPlayer.Character:FindFirstChild("Humanoid") then
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
                     LocalPlayer.Character.Humanoid:BreakJoints()
                 end
-                LocalPlayer.CharacterAdded:Wait()
+                -- Ждем перерождения
+                local char = LocalPlayer.CharacterAdded:Wait()
                 task.wait(1.2)
+                -- Продолжаем цикл заново
             end
         end
     end
@@ -656,245 +213,33 @@ RunService.RenderStepped:Connect(function()
         if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move - cf.LookVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move - cf.RightVector end
         if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + cf.RightVector end
-        hrp.Velocity = move * _G.FlySpeed
+        if move.Magnitude > 0 then
+            hrp.Velocity = move.Unit * _G.FlySpeed
+        else
+            hrp.Velocity = Vector3.new(0, hrp.Velocity.Y, 0)
+        end
     end
 end)
 
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if _G.BHop and input.KeyCode == Enum.KeyCode.Space then
-        while UserInputService:IsKeyDown(Enum.KeyCode.Space) and _G.BHop do
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                local hum = LocalPlayer.Character.Humanoid
-                if hum.FloorMaterial ~= Enum.Material.Air then
-                    LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(LocalPlayer.Character.HumanoidRootPart.Velocity.X, _G.BhopJump, LocalPlayer.Character.HumanoidRootPart.Velocity.Z)
-                    hum.WalkSpeed = _G.BhopSpeed
+        task.spawn(function()
+            while UserInputService:IsKeyDown(Enum.KeyCode.Space) and _G.BHop do
+                if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+                    local hum = LocalPlayer.Character.Humanoid
+                    local hrp = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if hum and hrp and hum.FloorMaterial ~= Enum.Material.Air then
+                        hrp.Velocity = Vector3.new(hrp.Velocity.X, _G.BhopJump, hrp.Velocity.Z)
+                        hum.WalkSpeed = _G.BhopSpeed
+                    end
                 end
+                task.wait(0.02)
             end
-            task.wait(0.02)
-        end
-    end
-end)
---===================================================================================--
---                             JYPX // V1.1 - BUILD A BOAT FOR TREASURE               --
---===================================================================================--
-
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local Workspace = game:GetService("Workspace")
-local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local TeleportService = game:GetService("TeleportService")
-
--- Проверка и создание папки для сохранений в файловой системе эксплоита
-if not isfolder("jypxBuild") then
-    makefolder("jypxBuild")
-end
-
---===================================================================================--
--- [ГЛОБАЛЬНЫЕ НАСТРОЙКИ И ФЛАГИ СОСТОЯНИЯ ЧИТА]
---===================================================================================--
-_G.Building = false
-_G.BuildDelay = 0.05
-_G.AutoFarm = false
-_G.FarmDuration = 25 -- Оптимальное время пролета стадий в секундах
-_G.NoClip = false
-_G.Fly = false
-_G.FlySpeed = 50
-_G.BHop = false
-_G.BhopSpeed = 25
-_G.BhopJump = 40
-_G.ESP_Enabled = false
-
-local Cam = Workspace.CurrentCamera
-local PreviewModel = nil
-
---===================================================================================--
--- [МОДУЛЬ 1: АВТО-БИЛД (ЛОГИКА И СЕРИАЛИЗАЦИЯ ДАННЫХ)]
---===================================================================================--
-
-local function sanitizeCFrame(cf) return {cf:GetComponents()} end
-local function toCFrame(tbl) return CFrame.new(unpack(tbl)) end
-local function sanitizeColor(color) return {color.R, color.G, color.B} end
-
--- Функция экспорта (Safe Build)
-local function safeBuild(fileName)
-    local targetFolder = Workspace:FindFirstChild("jypxBuild") or Workspace.Plots:FindFirstChild(LocalPlayer.Name)
-    if not targetFolder then return end
-    local blocksData = {}
-    for _, block in ipairs(targetFolder:GetDescendants()) do
-        if block:IsA("BasePart") then
-            pcall(function()
-                table.insert(blocksData, {
-                    ID = block:GetAttribute("BlockID") or block.Name,
-                    Name = block.Name,
-                    Position = sanitizeCFrame(block.CFrame),
-                    Size = {block.Size.X, block.Size.Y, block.Size.Z},
-                    Color = sanitizeColor(block.Color),
-                    Transparency = block.Transparency,
-                    Anchored = block.Anchored,
-                    CanCollide = block.CanCollide
-                })
-            end)
-        end
-    end
-    writefile("jypxBuild/" .. fileName .. ".build", HttpService:JSONEncode(blocksData))
-end
-
--- Удаление старого превью
-local function clearPreview()
-    if PreviewModel then PreviewModel:Destroy() PreviewModel = nil end
-end
-
--- Функция предпросмотра (Preview)
-local function previewBuild(fileName)
-    clearPreview()
-    local success, content = pcall(function() return readfile("jypxBuild/" .. fileName .. ".build") end)
-    if not success then return end
-    local blocksData = HttpService:JSONDecode(content)
-    PreviewModel = Instance.new("Model")
-    PreviewModel.Name = "JYPX_Preview"
-    PreviewModel.Parent = Workspace
-
-    local hl = Instance.new("Highlight")
-    hl.FillColor = Color3.fromRGB(0, 255, 255)
-    hl.FillTransparency = 0.5
-    hl.OutlineTransparency = 0.2
-    hl.Parent = PreviewModel
-
-    for _, data in ipairs(blocksData) do
-        local part = Instance.new("Part")
-        part.Size = Vector3.new(unpack(data.Size))
-        part.CFrame = toCFrame(data.Position)
-        part.Color = Color3.new(unpack(data.Color))
-        part.Transparency = 0.5
-        part.CanCollide = false
-        part.Anchored = true
-        part.Parent = PreviewModel
-    end
-end
-
--- Функция постройки (Build)
-local function startBuild(fileName)
-    _G.Building = true
-    local success, content = pcall(function() return readfile("jypxBuild/" .. fileName .. ".build") end)
-    if not success then _G.Building = false return end
-    local blocksData = HttpService:JSONDecode(content)
-    for _, data in ipairs(blocksData) do
-        if not _G.Building then break end
-        pcall(function()
-            local part = Instance.new("Part")
-            part.Name = data.Name
-            part.Size = Vector3.new(unpack(data.Size))
-            part.CFrame = toCFrame(data.Position)
-            part.Color = Color3.new(unpack(data.Color))
-            part.Transparency = data.Transparency
-            part.CanCollide = data.CanCollide
-            part.Anchored = data.Anchored
-            part.Parent = Workspace.Plots:FindFirstChild(LocalPlayer.Name) or Workspace
         end)
-        task.wait(_G.BuildDelay)
-    end
-    _G.Building = false
-end
-
---===================================================================================--
--- [МОДУЛЬ 2: АВТОФАРМ С АВТО-СПУСКОМ ПОД ВОДОПАД]
---===================================================================================--
-local FarmStages = {
-    Vector3.new(-50, 55, 200),
-    Vector3.new(-50, 55, 1000),
-    Vector3.new(-50, 55, 2000),
-    Vector3.new(-50, 55, 3000),
-    Vector3.new(-50, 55, 4000),
-    Vector3.new(-50, 55, 5000),
-    Vector3.new(-50, 55, 6000),
-    Vector3.new(-50, 55, 7500),  -- Финал верхней стадии перед обрывом
-    Vector3.new(-50, -10, 8500), -- КРИТИЧЕСКИЙ СПУСК: Уходим по высоте Y вниз под водопад
-    Vector3.new(-60, -15, 9400), -- Залет прямо к сундуку в пещеру
-}
-
-task.spawn(function()
-    while true do
-        task.wait(1)
-        if _G.AutoFarm and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = LocalPlayer.Character.HumanoidRootPart
-            
-            for _, stagePos in ipairs(FarmStages) do
-                if not _G.AutoFarm then break end
-                
-                local distance = (hrp.Position - stagePos).Magnitude
-                local speed = distance / (_G.FarmDuration / #FarmStages)
-                
-                local bv = Instance.new("BodyVelocity")
-                bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
-                bv.Velocity = (stagePos - hrp.Position).Unit * speed
-                bv.Parent = hrp
-                
-                while (hrp.Position - stagePos).Magnitude > 12 and _G.AutoFarm do
-                    pcall(function()
-                        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-                            if part:IsA("BasePart") then part.CanCollide = false end
-                        end
-                    end)
-                    task.wait(0.05)
-                end
-                bv:Destroy()
-            end
-            
-            if _G.AutoFarm then
-                task.wait(2.5) -- Тайм-аут на сбор награды из сундука
-                if LocalPlayer.Character:FindFirstChild("Humanoid") then
-                    LocalPlayer.Character.Humanoid:BreakJoints()
-                end
-                LocalPlayer.CharacterAdded:Wait()
-                task.wait(1.2)
-            end
-        end
     end
 end)
 
---===================================================================================--
--- [МОДУЛЬ 3: ДВИЖЕНИЯ И ЧИТЫ (FLY, NO-CLIP, BHOP)]
---===================================================================================--
-RunService.Stepped:Connect(function()
-    if (_G.NoClip or _G.Fly) and LocalPlayer.Character then
-        for _, part in ipairs(LocalPlayer.Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
-        end
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    if _G.Fly and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-        local hrp = LocalPlayer.Character.HumanoidRootPart
-        local cf = Cam.CFrame
-        local move = Vector3.zero
-        if UserInputService:IsKeyDown(Enum.KeyCode.W) then move = move + cf.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.S) then move = move - cf.LookVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.A) then move = move - cf.RightVector end
-        if UserInputService:IsKeyDown(Enum.KeyCode.D) then move = move + cf.RightVector end
-        hrp.Velocity = move * _G.FlySpeed
-    end
-end)
-
-UserInputService.InputBegan:Connect(function(input, gpe)
-    if gpe then return end
-    if _G.BHop and input.KeyCode == Enum.KeyCode.Space then
-        while UserInputService:IsKeyDown(Enum.KeyCode.Space) and _G.BHop do
-            if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
-                local hum = LocalPlayer.Character.Humanoid
-                if hum.FloorMaterial ~= Enum.Material.Air then
-                    LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(LocalPlayer.Character.HumanoidRootPart.Velocity.X, _G.BhopJump, LocalPlayer.Character.HumanoidRootPart.Velocity.Z)
-                    hum.WalkSpeed = _G.BhopSpeed
-                end
-            end
-            task.wait(0.02)
-        end
-    end
-end)
 --===================================================================================--
 -- [ЧАСТЬ 2: ГРАФИЧЕСКИЙ ИНТЕРФЕЙС JYPX // V1.1 С РЕЗАЙЗОМ И КНОПКОЙ СВЕРНУТЬ]
 --===================================================================================--
@@ -902,7 +247,7 @@ end)
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "JYPX_Hub_V11"
 ScreenGui.ResetOnSpawn = false
-pcall(function() ScreenGui.Parent = game:GetService("CoreGui") end)
+pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 -- Главный фрейм
@@ -1050,10 +395,9 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Конструктор закругленных кнопок
-local function createButton(text, parent, callback)
+-- Конструктор закругленных кнопок с поддержкой состояния ON/OFF
+local function createToggleButton(text, parent, getter, setter)
     local btn = Instance.new("TextButton")
-    btn.Text = text
     btn.Size = UDim2.new(1, -10, 0, 35)
     btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
     btn.TextColor3 = Color3.fromRGB(230, 230, 230)
@@ -1065,7 +409,18 @@ local function createButton(text, parent, callback)
     btnCorner.CornerRadius = UDim.new(0, 5)
     btnCorner.Parent = btn
     
-    btn.MouseButton1Click:Connect(callback)
+    local function updateText()
+        local state = getter()
+        btn.Text = text .. " [" .. (state and "ON" or "OFF") .. "]"
+        btn.BackgroundColor3 = state and Color3.fromRGB(30, 80, 30) or Color3.fromRGB(35, 35, 35)
+    end
+    
+    updateText()
+    btn.MouseButton1Click:Connect(function()
+        setter(not getter())
+        updateText()
+    end)
+    
     return btn
 end
 
@@ -1090,17 +445,56 @@ local ExploitLayout = Instance.new("UIListLayout")
 ExploitLayout.Padding = UDim.new(0, 6)
 ExploitLayout.Parent = ExploitsPage
 
+-- Функция создания обычной кнопки
+local function createButton(text, parent, callback)
+    local btn = Instance.new("TextButton")
+    btn.Text = text
+    btn.Size = UDim2.new(1, -10, 0, 35)
+    btn.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    btn.TextColor3 = Color3.fromRGB(230, 230, 230)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 12
+    btn.Parent = parent
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 5)
+    btnCorner.Parent = btn
+    
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
 -- Наполнение элементами вкладки BUILD
 createButton("Safe Build (Сохранить)", BuildPage, function() safeBuild("myship") end)
 createButton("Preview (Предпросмотр)", BuildPage, function() previewBuild("myship") end)
 createButton("Build (Начать постройку)", BuildPage, function() startBuild("myship") end)
 createButton("Stop Build (Остановить)", BuildPage, function() _G.Building = false clearPreview() end)
 
--- Наполнение элементами вкладки EXPLOITS
-createButton("Auto Farm: Переключить", ExploitsPage,unction() _G.AutoFarm = not _G.AutoFarm end)
-createButton("Fly & NoClip: Переключить", ExploitsPage, function() _G.Fly = not _G.Fly _G.NoClip = _G.Fly end)
-createButton("BunnyHop: Переключить", ExploitsPage, function() _G.BHop = not _G.BHop end)
+-- Наполнение элементами вкладки EXPLOITS с поддержкой ON/OFF
+createToggleButton("Auto Farm", ExploitsPage, function() return _G.AutoFarm end, function(v) _G.AutoFarm = v end)
+createToggleButton("Fly & NoClip", ExploitsPage, function() return _G.Fly end, function(v) _G.Fly = v _G.NoClip = v end)
+createToggleButton("BunnyHop", ExploitsPage, function() return _G.BHop end, function(v) _G.BHop = v end)
 
 -- Логика переключения между главными вкладками меню
-createButton("BUILD", SideBar, function() BuildPage.Visible = true ExploitsPage.Visible = false end)
-createButton("EXPLOITS", SideBar, function() BuildPage.Visible = false ExploitsPage.Visible = true end)
+local function createSideButton(text, parent, callback)
+    local btn = Instance.new("TextButton")
+    btn.Text = text
+    btn.Size = UDim2.new(1, -10, 0, 35)
+    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 12
+    btn.Parent = parent
+    
+    local btnCorner = Instance.new("UICorner")
+    btnCorner.CornerRadius = UDim.new(0, 5)
+    btnCorner.Parent = btn
+    
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+createSideButton("BUILD", SideBar, function() BuildPage.Visible = true ExploitsPage.Visible = false end)
+createSideButton("EXPLOITS", SideBar, function() BuildPage.Visible = false ExploitsPage.Visible = true end)
+
+print("JYPX // V1.1 успешно загружен! Хорошей игры, господин.")
