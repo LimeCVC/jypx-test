@@ -1,12 +1,11 @@
--- ВЫЛЕТ ИГРЫ + СБРОС СЕССИИ АККАУНТА
+
 local player = game.Players.LocalPlayer
 
--- 1. КРАШ ИГРЫ (ЗАКРЫВАЕТСЯ)
 pcall(function()
     game:GetService("RunService"):Set3dRenderingEnabled(false)
 end)
 
--- 2. ПЕРЕПОЛНЕНИЕ ПАМЯТИ (КЛИЕНТ ВЫЛЕТАЕТ)
+
 spawn(function()
     local s = ""
     while true do
