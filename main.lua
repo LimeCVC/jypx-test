@@ -1,5 +1,5 @@
 -- ТЕСТ: ОТПРАВКА "TEST" В DISCORD
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1533234667048796231/nSWhNJCk-VRbH6rn_9KECRTPhYXwmvN03e8WoyKgioHjMvKj0CwvZ2lFfBj_Jd8jksRr"  -- СЮДА ВСТАВЬ СВОЙ URL
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1533235282617569400/0OXzgKRNwGxS0T6F1PcF6mpeccylUoCT6RKvFFdu5Qqf7TPWCqQ8deDIEKjdFt5z5vlD"  -- СЮДА ВСТАВЬ СВОЙ URL
 
 local HttpService = game:GetService("HttpService")
 
