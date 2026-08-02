@@ -1,6 +1,3 @@
--- ============================================================
---  БАЗОВЫЕ НАСТРОЙКИ И ПЕРЕМЕННЫЕ
--- ============================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -20,9 +17,6 @@ local BuildingParts = ReplicatedStorage:WaitForChild("BuildingParts")
 
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
--- ============================================================
---  ПУТИ ДЛЯ СОХРАНЕНИЯ И НАСТРОЙКИ
--- ============================================================
 local FOLDER_PATH = "SoPeRa_Builds"
 local FOLDER_PREFIX = FOLDER_PATH .. "/"
 local SETTINGS_PATH = "SPRB_Settings.json"
@@ -38,9 +32,6 @@ local PreviewFolder = Workspace:FindFirstChild("SPRB_Preview") or Instance.new("
 PreviewFolder.Name = "SPRB_Preview"
 PreviewFolder.Parent = Workspace
 
--- ============================================================
---  НАСТРОЙКИ ПО УМОЛЧАНИЮ
--- ============================================================
 local Settings = {
     previewTransparency = 0.5,
     guiTransparency = 0.15,
@@ -66,9 +57,6 @@ local Settings = {
     windowHeight = -1,
 }
 
--- ============================================================
---  ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ДЛЯ РАБОТЫ
--- ============================================================
 local selectedPlayer = nil
 local currentBuild = {}
 local isBuilding = false
@@ -88,9 +76,6 @@ local ProgressBarFillRef = nil
 local DupeInfoLabelRef = nil
 local DupePercentLabelRef = nil
 
--- ============================================================
---  ЦВЕТОВАЯ СХЕМА
--- ============================================================
 local Colors = {
     BG = Color3.fromRGB(8, 8, 8),
     Panel = Color3.fromRGB(18, 18, 18),
@@ -114,9 +99,6 @@ local UISoundConfig = {
     close = "rbxassetid://6026984255",
 }
 
--- ============================================================
---  ФУНКЦИИ ДЛЯ РАБОТЫ С ЦВЕТАМИ
--- ============================================================
 local function syncColors()
     Colors.Border = Settings.secondaryColor
     Colors.Text = Settings.primaryColor
@@ -148,9 +130,6 @@ local function playUISound(soundId)
     end)
 end
 
--- ============================================================
---  РАБОТА С ФАЙЛАМИ И ПАПКАМИ
--- ============================================================
 local function ensureFolder()
     if isfolder(FOLDER_PATH) then
         return
@@ -173,9 +152,6 @@ local function getBuildSearchPaths()
     return paths
 end
 
--- ============================================================
---  ЗАГРУЗКА/СОХРАНЕНИЕ НАСТРОЕК
--- ============================================================
 local function loadSettings()
     if isfile(SETTINGS_PATH) then
         local ok, data = pcall(function() return HttpService:JSONDecode(readfile(SETTINGS_PATH)) end)
@@ -215,9 +191,6 @@ local function saveCustomScripts(data)
     writefile(CUSTOM_SCRIPTS_PATH, HttpService:JSONEncode(data or {windows={}}))
 end
 
--- ============================================================
---  ФУНКЦИИ РАБОТЫ С БЛОКАМИ
--- ============================================================
 local function getBlockID(blockName)
     local c = BlockData:FindFirstChild(blockName)
     return c and c.Value or 0
@@ -253,23 +226,17 @@ local function getPlayerZone(player)
     end
 end
 
--- ============================================================
---  ФУНКЦИИ ДЛЯ РАБОТЫ СО СПИСКАМИ ИГРОКОВ
--- ============================================================
 local function getPlayerList()
     local list = {}
     for _, p in pairs(Players:GetPlayers()) do
         local d = p.Name
         if p.DisplayName ~= p.Name then d = p.DisplayName .. " (" .. p.Name .. ")" end
-        if p == LocalPlayer then d = d .. " [Я]" end
+        if p == LocalPlayer then d = d .. " [ME]" end
         table.insert(list, {name=p.Name, display=d})
     end
     return list
 end
 
--- ============================================================
---  КОНВЕРТЕРЫ СТРОК И КООРДИНАТ
--- ============================================================
 local function cfStr(cf)
     return string.format("%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f", cf:GetComponents())
 end
@@ -316,9 +283,6 @@ local function parseColorRGBA(rgba)
     return string.format("%.6f, %.6f, %.6f", math.clamp(r, 0, 1), math.clamp(g, 0, 1), math.clamp(b, 0, 1))
 end
 
--- ============================================================
---  ГЕОМЕТРИЧЕСКИЕ ФУНКЦИИ (ДЛЯ КОНВЕРТЕРА)
--- ============================================================
 local function geomGetAABB(shape)
     if type(shape) ~= "table" then return nil end
     local t = tonumber(shape.type) or -1
@@ -405,9 +369,6 @@ local function geomMakeBlock(cx, cy, zPos, w, h, thickness, rotZ, colorStr, tran
     }
 end
 
--- ============================================================
---  КОНВЕРТЕРЫ РАЗНЫХ ФОРМАТОВ В БЛОКИ
--- ============================================================
 local function geomGetBounds(shapes)
     local minX, minY = math.huge, math.huge
     local maxX, maxY = -math.huge, -math.huge
@@ -552,9 +513,6 @@ local function convertGeometrizeJsonToBuild(jsonText, buildName, scale, thicknes
     return outPath, nil
 end
 
--- ============================================================
---  ФУНКЦИИ ДЛЯ РАБОТЫ С ПУТЯМИ И ФАЙЛАМИ
--- ============================================================
 local function trimStr(s)
     return tostring(s or ""):gsub("^%s*(.-)%s*$", "%1")
 end
@@ -614,9 +572,6 @@ local function getParentDir(path)
     return cleaned:match("^(.*)[/\\][^/\\]+$")
 end
 
--- ============================================================
---  КОНВЕРТЕРЫ В ФОРМАТ ASU
--- ============================================================
 local function rgbStr(r, g, b)
     if r > 1 or g > 1 or b > 1 then
         r, g, b = r / 255, g / 255, b / 255
@@ -734,9 +689,6 @@ local function mergePropertyMaps(boolValues, numberValues, extras)
     return outBool, outNum
 end
 
--- ============================================================
---  ФУНКЦИЯ ДЛЯ ОПРЕДЕЛЕНИЯ ЭКЗЕКУТОРА
--- ============================================================
 local function currentExecutorName()
     local ok, name = pcall(function()
         if identifyexecutor then
@@ -753,9 +705,6 @@ local function currentExecutorName()
     return ""
 end
 
--- ============================================================
---  ФУНКЦИИ ДЛЯ GUI (ПРОВЕРКА КНОПОК)
--- ============================================================
 local function pointInsideAnyButton(container, x, y)
     for _, child in pairs(container:GetChildren()) do
         if child:IsA("TextButton") or child:IsA("ImageButton") then
@@ -769,9 +718,6 @@ local function pointInsideAnyButton(container, x, y)
     return false
 end
 
--- ============================================================
---  ФУНКЦИИ ЗАПИСИ КОНВЕРТИРОВАННЫХ БИЛДОВ
--- ============================================================
 local function writeConvertedBuild(buildName, material, blocks)
     local safeName = trimStr(buildName)
     if safeName == "" then
@@ -806,9 +752,6 @@ local function writeConvertedBuild(buildName, material, blocks)
     return outPath, nil
 end
 
--- ============================================================
---  GZIP ФУНКЦИИ ДЛЯ РАСПАКОВКИ
--- ============================================================
 local function bytesToString(bytes)
     local chunks = {}
     for i = 1, #bytes, 4096 do
@@ -884,9 +827,6 @@ local function gzBitstreamFromString(data)
     return stream
 end
 
--- ============================================================
---  РАБОТА С МАЙНКРАФТ СХЕМАТИКАМИ (NBT)
--- ============================================================
 local function gzHuffmanTable(init, isFull)
     local entries = {}
     if isFull then
@@ -1196,9 +1136,6 @@ local function decodeMaybeGzip(data)
     return data, nil
 end
 
--- ============================================================
---  ПАРСЕР NBT ДЛЯ МАЙНКРАФТ СХЕМ
--- ============================================================
 local function makeNbtReader(data)
     local r = {data = data, pos = 1}
 
@@ -1349,9 +1286,6 @@ local function parseNbt(data)
     return parseNbtPayload(reader, 10), nil
 end
 
--- ============================================================
---  ЦВЕТА ДЛЯ МАЙНКРАФТ БЛОКОВ
--- ============================================================
 local MC_DYE_COLORS = {
     white = rgbStr(249, 255, 254),
     orange = rgbStr(249, 128, 29),
@@ -1492,9 +1426,6 @@ local function legacyIdToState(blockId, dataValue)
     return simple[blockId] or "minecraft:stone"
 end
 
--- ============================================================
---  МЕРЖ ВОКСЕЛЕЙ ДЛЯ СХЕМ
--- ============================================================
 local function greedyMergeVoxels(voxels)
     if #voxels == 0 then return {} end
     table.sort(voxels, function(a, b)
@@ -1584,9 +1515,6 @@ local function decodePaletteVarInts(bytes, expectedCount)
     return values
 end
 
--- ============================================================
---  КОНВЕРТЕР МАЙНКРАФТ СХЕМАТИК
--- ============================================================
 local function buildSchemVoxels(root)
     local width = tonumber(root.Width) or 0
     local height = tonumber(root.Height) or 0
@@ -1719,9 +1647,6 @@ local function convertMinecraftSchematicToBuild(filePath, buildName, scale, mate
     return writeConvertedBuild(buildName, outMaterial, blocks)
 end
 
--- ============================================================
---  КОНВЕРТЕР OBJ ФАЙЛОВ
--- ============================================================
 local function parseMtlColors(filePath, baseDir)
     local colors = {}
     local text = readfile(filePath)
@@ -2079,9 +2004,6 @@ local function convertObjToBuild(filePath, buildName, scale, thickness, material
     return writeConvertedBuild(buildName, outMaterial, blocks)
 end
 
--- ============================================================
---  КОНВЕРТЕР ФОРМАТА ASU В PRS
--- ============================================================
 local function bytesToFloatLE(b1, b2, b3, b4)
     local v = (((b4 * 256) + b3) * 256 + b2) * 256 + b1
     if v == 0 then return 0 end
@@ -2225,9 +2147,6 @@ local function convertedBlocksToPRS(material, blocks)
     return convertAsuToPRS({[tostring(material or "PlasticBlock")] = blocks})
 end
 
--- ============================================================
---  КОНВЕРТЕР PRS В ASU
--- ============================================================
 local function convertPRStoASU(prsData)
     if type(prsData) ~= "table" then return nil end
     local cats = {}
@@ -2300,9 +2219,6 @@ local function saveBuildToFile(fileName, buildData)
     return false, "convert failed"
 end
 
--- ============================================================
---  ЗАГРУЗКА БИЛДОВ ИЗ ФАЙЛОВ
--- ============================================================
 local function loadBuildFromFile(fileName)
     ensureFolder()
     local json
@@ -2366,9 +2282,6 @@ local function getSavedBuilds()
     return builds
 end
 
--- ============================================================
---  ФУНКЦИИ ВЗАИМОДЕЙСТВИЯ С ИГРОЙ
--- ============================================================
 local function teleportCharacterTo(pos)
     local hrp = Character and Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return false end
@@ -2416,9 +2329,6 @@ local function setStatus(text)
     if MiscStatusLabelRef then MiscStatusLabelRef.Text = text end
 end
 
--- ============================================================
---  ФУНКЦИИ ДЛЯ РАБОТЫ С БЛОКАМИ В ИГРЕ
--- ============================================================
 local function placeBlock(blockName, cframe, relativeTo)
     equipAllTools()
     local tool = Character:FindFirstChild("BuildingTool")
@@ -2479,9 +2389,6 @@ local function moveBlock(block, cf)
     return true
 end
 
--- ============================================================
---  КОПИРОВАНИЕ БИЛДА
--- ============================================================
 local function copyBuild()
     if not selectedPlayer then return nil end
     local playerBlocks = BlocksFolder:FindFirstChild(selectedPlayer.Name)
@@ -2646,9 +2553,6 @@ local function copyBuild()
     return buildData
 end
 
--- ============================================================
---  ФУНКЦИИ ДЛЯ ПОСТРОЙКИ БИЛДА
--- ============================================================
 local function getBlock(expected, list, used)
     local best, bestDist = nil, math.huge
     local tpos = expected.skyWorldCF.Position
@@ -2764,9 +2668,6 @@ local function buildDataToFlat(buildData, myZone)
     return flat
 end
 
--- ============================================================
---  ФУНКЦИИ ДЛЯ РАБОТЫ СО СЛОТАМИ СОХРАНЕНИЯ
--- ============================================================
 local function saveToSlot(slot)
     local Event = workspace:FindFirstChild("SaveBoatData")
     if not Event then setStatus("SaveBoatData not found!") ; return false end
@@ -2787,9 +2688,6 @@ local function loadFromSlot(slot)
     return true
 end
 
--- ============================================================
---  ФУНКЦИЯ INF MERGE (БЕСКОНЕЧНЫЙ БЛОК)
--- ============================================================
 local function tryInfMerge(slot1, slot2, expectedMinCount, statusCb)
     local folder = BlocksFolder:FindFirstChild(LocalPlayer.Name)
     local beforeCount = folder and #folder:GetChildren() or 0
@@ -2840,9 +2738,6 @@ local function tryInfMerge(slot1, slot2, expectedMinCount, statusCb)
     return false, "high ping or merge failed"
 end
 
--- ============================================================
---  ФУНКЦИИ ДЛЯ ПРИМЕНЕНИЯ СВОЙСТВ К БЛОКАМ
--- ============================================================
 local function applyNumberValues(b, numVals, propRF)
     if not numVals or not b or type(numVals) ~= "table" then return end
     for propName, propVal in pairs(numVals) do
@@ -2982,9 +2877,6 @@ local function setBlockProperties(b, v, propRF)
     applyNumberValues(b, v.NumberValues, propRF)
 end
 
--- ============================================================
---  ОСНОВНАЯ ФУНКЦИЯ ПОСТРОЙКИ БИЛДА
--- ============================================================
 local function pasteBuild(buildData, statusCb)
     if not buildData or isBuilding then return false end
     isBuilding = true
@@ -3637,9 +3529,7 @@ local function pasteBuild(buildData, statusCb)
     return true
 end
 
--- ============================================================
---  ФУНКЦИИ ДЛЯ ПРЕВЬЮ БИЛДА
--- ============================================================
+
 local function clearPreview()
     for _, o in pairs(PreviewFolder:GetChildren()) do o:Destroy() end
     for _, b in pairs(selectionBoxes) do if b then pcall(function() b:Destroy() end) end end
@@ -3739,9 +3629,6 @@ local function updateSelectionHighlight(blockName)
     end
 end
 
--- ============================================================
---  ФУНКЦИЯ ЗАВЕРШЕНИЯ СКРИПТА
--- ============================================================
 local function terminateScript(screenGui)
     stopBuild = true
     clearPreview()
@@ -3787,9 +3674,6 @@ local function terminateScript(screenGui)
     setStatus = function() end
 end
 
--- ============================================================
---  СОЗДАНИЕ GUI ИНТЕРФЕЙСА
--- ============================================================
 local UI = nil
 local rebuildUI = nil
 
@@ -3858,9 +3742,6 @@ local function bindWindowButtons(closeBtn, openBtn, showGUI, hideGUI)
     end)
 end
 
--- ============================================================
---  ОСНОВНАЯ ФУНКЦИЯ СОЗДАНИЯ UI
--- ============================================================
 local function createUI()
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "SPRBBuilder"
@@ -4655,13 +4536,10 @@ local function createUI()
         return dbtn, refresh
     end
 
-    -- ============================================================
-    --  ВКЛАДКИ GUI
-    -- ============================================================
-    local T1btn, T1frame = makeTab("Build", "ПОСТРОЙКА")
-    local T2btn, T2frame = makeTab("Blocks", "БЛОКИ")
-    local T3btn, T3frame = makeTab("Exploit", "ЭКСПЛОЙТЫ")
-    local T4btn, T4frame = makeTab("Settings", "НАСТРОЙКИ")
+    local T1btn, T1frame = makeTab("Build", "BUILD")
+    local T2btn, T2frame = makeTab("Blocks", "BLOCKS")
+    local T3btn, T3frame = makeTab("Exploit", "EXPLOITS")
+    local T4btn, T4frame = makeTab("Settings", "SETTINGS")
 
     local StatusLabel = Instance.new("TextLabel")
     StatusLabel.Name = "StatusLabel"
@@ -4669,7 +4547,7 @@ local function createUI()
     StatusLabel.BackgroundColor3 = Colors.PanelSoft
     StatusLabel.BackgroundTransparency = 0
     StatusLabel.BorderSizePixel = 0
-    StatusLabel.Text = "  Готов"
+    StatusLabel.Text = "  Ready"
     StatusLabel.TextColor3 = Colors.Text
     StatusLabel.TextSize = 11
     StatusLabel.Font = Enum.Font.GothamSemibold
@@ -4723,7 +4601,7 @@ local function createUI()
     DupeInfoLabel.BackgroundColor3 = Color3.fromRGB(12,12,12)
     DupeInfoLabel.BackgroundTransparency = 0
     DupeInfoLabel.BorderSizePixel = 0
-    DupeInfoLabel.Text = "  Готов к постройке"
+    DupeInfoLabel.Text = "  Ready to build"
     DupeInfoLabel.TextColor3 = Colors.Muted
     DupeInfoLabel.TextSize = 10
     DupeInfoLabel.Font = Enum.Font.GothamSemibold
@@ -4847,11 +4725,11 @@ local function createUI()
         return btn, fr
     end
 
-    local objBtn, objFr = makeExSub("Obj", "КОНВЕРТ")
+    local objBtn, objFr = makeExSub("Obj", "CONV")
     local infBtn, infFr = makeExSub("Inf", "INF")
-    local movBtn, movFr = makeExSub("Mov", "ПЕРЕМЕЩЕНИЕ")
-    local miscBtn, miscFr = makeExSub("Misc", "РАЗНОЕ")
-    local rainBtn, rainFr = makeExSub("Shape", "ФОРМЫ")
+    local movBtn, movFr = makeExSub("Mov", "MOVE")
+    local miscBtn, miscFr = makeExSub("Misc", "MISC")
+    local rainBtn, rainFr = makeExSub("Shape", "SHAPE")
 
     task.spawn(function()
         task.wait(0.1)
@@ -4860,16 +4738,13 @@ local function createUI()
         objBtn.BackgroundColor3 = Colors.ActiveBG
         objBtn.TextColor3 = Colors.ActiveText
     end)
-
-    -- ============================================================
-    --  ВКЛАДКА ПОСТРОЙКА
-    -- ============================================================
-    makeLabel("ИГРОК", T1frame)
+    do
+    makeLabel("PLAYER", T1frame)
     local playerDD, refreshPlayers = makeDropdown("PlayerDD", getPlayerList, T1frame, function(pName)
         selectedPlayer = Players:FindFirstChild(pName)
     end)
 
-    makeLabel("ФАЙЛЫ ПОСТРОЕК", T1frame)
+    makeLabel("BUILD FILES", T1frame)
     local fileDD, refreshFiles = makeDropdown("FileDD", getSavedBuilds, T1frame, function(fName)
         local finp = T1frame:FindFirstChild("FileInputFrame") and T1frame.FileInputFrame:FindFirstChild("FileInput")
         if finp then finp.Text = fName end
@@ -4885,14 +4760,14 @@ local function createUI()
         end)
     end)
 
-    makeBtn("RefreshFilesBtn", "Обновить список", T1frame, function()
+    makeBtn("RefreshFilesBtn", "Refresh File List", T1frame, function()
         refreshFiles()
     end)
 
-    makeLabel("ИМЯ ФАЙЛА", T1frame)
-    local fileInput = makeInput("FileInput", "Введите имя файла...", T1frame)
+    makeLabel("FILE NAME", T1frame)
+    local fileInput = makeInput("FileInput", "Enter file name...", T1frame)
 
-    makeLabel("ОБЪЕКТЫ", T1frame)
+    makeLabel("OBJECTS", T1frame)
     local objListFrame = Instance.new("ScrollingFrame")
     objListFrame.Name = "ObjList"
     objListFrame.Size = UDim2.new(1, 0, 0, 120)
@@ -4955,7 +4830,7 @@ local function createUI()
         end
     end
 
-    makeLabel("ДЕЙСТВИЯ", T1frame)
+    makeLabel("ACTIONS", T1frame)
 
     local function getCurrentBuildCount()
         local total = 0
@@ -4982,24 +4857,24 @@ local function createUI()
         local placed = 0
         local myBlocks = BlocksFolder:FindFirstChild(LocalPlayer.Name)
         if myBlocks then placed = #myBlocks:GetChildren() end
-        label.Text = "Блоков: " .. total .. " | Поставлено: " .. placed
+        label.Text = "Blocks: " .. total .. " | Placed: " .. placed
     end
 
     local function runBuildFromFile(progBar, counterLabel)
-        if isBuilding then setStatus("  Уже строится!") ; return end
+        if isBuilding then setStatus("  Already building!") ; return end
         local fn = fileInput.Text
-        if fn == "" then setStatus("  Введите имя файла") ; return end
-        setStatus("  Загрузка " .. fn .. "...")
+        if fn == "" then setStatus("  Enter a file name") ; return end
+        setStatus("  Loading " .. fn .. "...")
         local lb, lf = loadBuildFromFile(fn)
-        if not lb then setStatus("  Файл не найден: " .. fn) ; return end
+        if not lb then setStatus("  File not found: " .. fn) ; return end
         if lf == "Asu" then currentBuild = convertAsuToPRS(lb) else currentBuild = lb end
-        if not currentBuild or not next(currentBuild) then setStatus("  Постройка пуста") ; return end
-        if getCurrentBuildCount() == 0 then setStatus("  Нет блоков") ; return end
+        if not currentBuild or not next(currentBuild) then setStatus("  Build empty") ; return end
+        if getCurrentBuildCount() == 0 then setStatus("  No blocks found") ; return end
         updateObjectsList()
         refreshMiniCounter(counterLabel)
         if updateBlocksDisplayGlobal then updateBlocksDisplayGlobal() end
         if progBar then progBar.Size = UDim2.new(0, 0, 1, 0) end
-        setStatus("  Держите все инструменты при себе")
+        setStatus("  Keep all tools equipped until build finishes")
         task.wait(0.8)
         pasteBuild(currentBuild, function(msg, pct)
             setStatus("  " .. msg)
@@ -5011,32 +4886,32 @@ local function createUI()
         refreshMiniCounter(counterLabel)
     end
 
-    makeBtn("SaveBuildBtn", "Сохранить постройку", T1frame, function()
+    makeBtn("SaveBuildBtn", "Save Build", T1frame, function()
         local fn = fileInput.Text
-        if fn == "" then setStatus("  Введите имя файла") ; return end
-        if not selectedPlayer then setStatus("  Выберите игрока") ; return end
-        setStatus("  Копирование постройки...")
+        if fn == "" then setStatus("  Enter a file name first") ; return end
+        if not selectedPlayer then setStatus("  Select a player first") ; return end
+        setStatus("  Copying build...")
         currentBuild = copyBuild()
         if currentBuild then
             local _, fmt = saveBuildToFile(fn, currentBuild)
-            setStatus("  Сохранено: " .. fn .. " [" .. (fmt or Settings.saveFormat) .. "]")
+            setStatus("  Saved: " .. fn .. " [" .. (fmt or Settings.saveFormat) .. "]")
             refreshFiles()
         else
-            setStatus("  Не удалось скопировать")
+            setStatus("  Failed to copy build")
         end
     end)
 
-    makeBtn("BuildBtn", "Построить", T1frame, function()
+    makeBtn("BuildBtn", "Build", T1frame, function()
         local dupeInfo = T1frame:FindFirstChild("DupeInfoFrame")
         local progBG = dupeInfo and dupeInfo:FindFirstChild("ProgressBarBG")
         local progBar = progBG and progBG:FindFirstChild("ProgressBarFill")
         runBuildFromFile(progBar)
     end)
 
-    makeBtn("StopBuildBtn", "Остановить", T1frame, function()
+    makeBtn("StopBuildBtn", "Stop Build", T1frame, function()
         if isBuilding then
             stopBuild = true
-            setStatus("  Остановка...")
+            setStatus("  Stopping...")
             task.spawn(function()
                 for _, t in pairs(Character:GetChildren()) do
                     if t:IsA("Tool") then pcall(function() t.Parent = LocalPlayer.Backpack end) end
@@ -5061,27 +4936,27 @@ local function createUI()
                     end
                 end)
                 isBuilding = false
-                setStatus("  Остановлено")
+                setStatus("  Stopped")
             end)
         else
-            setStatus("  Не строится")
+            setStatus("  Not building")
         end
     end)
 
-    local PreviewBtn = makeBtn("PreviewBtn", "Превью", T1frame, function()
-        if not currentBuild or not next(currentBuild) then setStatus("  Нет загруженной постройки") ; return end
+    local PreviewBtn = makeBtn("PreviewBtn", "Preview", T1frame, function()
+        if not currentBuild or not next(currentBuild) then setStatus("  No build loaded") ; return end
         if previewActive then
             clearPreview()
             updateObjectsList()
-            setStatus("  Превью очищено")
+            setStatus("  Preview cleared")
         else
             createPreview(currentBuild)
             updateObjectsList()
-            setStatus("  Превью создано")
+            setStatus("  Preview created")
         end
     end)
     updatePreviewButtonGlobal = function()
-        if PreviewBtn then PreviewBtn.Text = previewActive and "Очистить превью" or "Превью" end
+        if PreviewBtn then PreviewBtn.Text = previewActive and "Clear Preview" or "Preview" end
     end
 
     local DockCounter = Instance.new("TextLabel")
@@ -5090,7 +4965,7 @@ local function createUI()
     DockCounter.BackgroundColor3 = Colors.PanelSoft
     DockCounter.BackgroundTransparency = 0
     DockCounter.BorderSizePixel = 0
-    DockCounter.Text = "  Блоков: 0 | Поставлено: 0"
+    DockCounter.Text = "  Blocks: 0 | Placed: 0"
     DockCounter.TextColor3 = Colors.Text
     DockCounter.TextSize = 11
     DockCounter.Font = Enum.Font.GothamSemibold
@@ -5105,8 +4980,8 @@ local function createUI()
         end
     end)
 
-    makeLabel("МАСШТАБ / СМЕЩЕНИЕ", T1frame)
-    local bsInput = makeInput("BuildScale", "Масштаб (по умолч. 1.0)", T1frame)
+    makeLabel("BUILD SCALE / OFFSET", T1frame)
+    local bsInput = makeInput("BuildScale", "Scale (default 1.0)", T1frame)
     bsInput.Text = tostring(Settings.buildScale)
     bsInput.FocusLost:Connect(function()
         local v = tonumber(bsInput.Text)
@@ -5117,7 +4992,7 @@ local function createUI()
     end)
 
     local function makeOffsetInput(axis, key)
-        local inp = makeInput(axis.."Off", "Смещение " .. axis, T1frame)
+        local inp = makeInput(axis.."Off", axis .. " Offset", T1frame)
         inp.Text = tostring(Settings[key])
         inp.FocusLost:Connect(function()
             local v = tonumber(inp.Text)
@@ -5176,11 +5051,11 @@ local function createUI()
         end
         local partsNeeded = maxInvSlot > 0 and math.ceil(totalNeeded / maxInvSlot) or "?"
         if Settings.infBlockEnabled then
-            infLabel.Text = "  INF: ~" .. partsNeeded .. " частей | Всего блоков: " .. totalNeeded
+            infLabel.Text = "  INF: ~" .. partsNeeded .. " parts | Total blocks: " .. totalNeeded
             infLabel.TextColor3 = Color3.fromRGB(180, 140, 50)
         else
             local pct = totalNeeded > 0 and math.floor(math.min(totalHave,totalNeeded)/totalNeeded*100) or 0
-            infLabel.Text = "  Всего: " .. totalNeeded .. " блоков | Есть: " .. pct .. "%"
+            infLabel.Text = "  Total: " .. totalNeeded .. " blocks  |  Have: " .. pct .. "%"
             infLabel.TextColor3 = pct >= 100 and Colors.Green or Colors.Muted
         end
         local ilc = Instance.new("UICorner") ; ilc.CornerRadius = UDim.new(0,4) ; ilc.Parent = infLabel
@@ -5254,7 +5129,7 @@ local function createUI()
             cl.Size = UDim2.new(1,0,0,13)
             cl.Position = UDim2.new(0,0,0,81)
             cl.BackgroundTransparency = 1
-            cl.Text = needed .. " нужно / " .. have .. " есть"
+            cl.Text = needed .. " need / " .. have .. " have"
             cl.TextColor3 = enough and Colors.Green or Colors.Red
             cl.TextSize = 9 ; cl.Font = Enum.Font.GothamBold
             cl.TextScaled = true ; cl.Parent = bf
@@ -5263,7 +5138,7 @@ local function createUI()
             bc.Size = UDim2.new(1,0,0,11)
             bc.Position = UDim2.new(0,0,0,95)
             bc.BackgroundTransparency = 1
-            bc.Text = stat.count .. " часть" .. (stat.count~=1 and "ей" or "")
+            bc.Text = stat.count .. " part" .. (stat.count~=1 and "s" or "")
             bc.TextColor3 = Colors.Muted
             bc.TextSize = 8 ; bc.Font = Enum.Font.Gotham
             bc.TextScaled = true ; bc.Parent = bf
@@ -5282,13 +5157,15 @@ local function createUI()
         end
     end
     updateBlocksDisplayGlobal = updateBlocksDisplay
-    makeLabel("ТРЕБУЕМЫЕ БЛОКИ", T2frame)
-    makeBtn("RefreshBlocksBtn", "Обновить", T2frame, function() updateBlocksDisplay() end)
+    makeLabel("REQUIRED BLOCKS", T2frame)
+    makeBtn("RefreshBlocksBtn", "Refresh", T2frame, function() updateBlocksDisplay() end)
 
-    -- ============================================================
-    --  ВКЛАДКА КОНВЕРТЕР
-    -- ============================================================
-    makeLabel("КОНВЕРТЕР", objFr)
+
+
+    end
+    do
+
+    makeLabel("CONVERTER", objFr)
 
     local selectedConvFile = nil
     local selectedConvKind = nil 
@@ -5316,7 +5193,7 @@ local function createUI()
         title.Size = UDim2.new(1, -12, 0, 22)
         title.Position = UDim2.new(0, 6, 0, 6)
         title.BackgroundTransparency = 1
-        title.Text = "Обучение конвертеру"
+        title.Text = "Converter Tutorial"
         title.TextColor3 = Colors.Text
         title.TextSize = 14
         title.Font = Enum.Font.GothamBold
@@ -5336,18 +5213,18 @@ local function createUI()
         body.TextWrapped = true
         body.ZIndex = 302
         body.Text =
-            "Конвертер поддерживает JSON изображений, OBJ меши и .schem/.schematic файлы Майнкрафт.\n\n" ..
-            "Можно выбрать файлы из папки SoPeRa_Builds или вставить полный путь.\n\n" ..
-            "JSON изображений:\n" ..
-            "Перейдите на https://www.samcodes.co.uk/project/geometrize-haxe-web/\n" ..
-            "Загрузите изображение, в настройках:\n" ..
-            "- Отключите все формы кроме Rotated Rectangles\n" ..
+            "Converter supports image JSON, OBJ meshes, and Minecraft .schem/.schematic.\n\n" ..
+            "You can select files from SoPeRa_Builds or paste a full file path.\n\n" ..
+            "Image JSON:\n" ..
+            "Go to https://www.samcodes.co.uk/project/geometrize-haxe-web/\n" ..
+            "Upload an image, open settings and set:\n" ..
+            "- Disable every shape type except Rotated Rectangles\n" ..
             "- Shape Opacity: 255\n" ..
             "- Initial Background Opacity: 255\n" ..
             "- Random Shapes Per Step: 100\n" ..
             "- Shape Mutations Per Step: 100\n" ..
-            "Дождитесь загрузки, сохраните как JSON, выберите ИЗОБРАЖЕНИЕ здесь, затем конвертируйте.\n\n" ..
-            "OBJ создаёт тонкие панели из граней. SCHEM/SCHEMATIC склеивает воксели по цвету."
+            "Wait for load, save as JSON, choose IMAGE here, then convert.\n\n" ..
+            "OBJ makes thin panels from mesh faces. SCHEM/SCHEMATIC greedily merges voxels by color."
         body.Parent = card
 
         overlay.InputBegan:Connect(function(inp)
@@ -5380,7 +5257,7 @@ local function createUI()
     convRefreshBtn.BackgroundColor3 = Colors.PanelElevated
     convRefreshBtn.BackgroundTransparency = 0
     convRefreshBtn.BorderSizePixel = 0
-    convRefreshBtn.Text = "Обновить"
+    convRefreshBtn.Text = "Refresh"
     convRefreshBtn.TextColor3 = Colors.Text
     convRefreshBtn.TextSize = 11
     convRefreshBtn.Font = Enum.Font.GothamSemibold
@@ -5401,8 +5278,8 @@ local function createUI()
     stylizeCard(helpBtn, Colors.PanelElevated, Colors.Border, 12)
     helpBtn.MouseButton1Click:Connect(openConverterHelp)
 
-    makeLabel("ФАЙЛ / ПУТЬ", objFr)
-    local convPathIn = makeInput("ConvPath", "Имя файла или полный путь", objFr)
+    makeLabel("FILE / PATH", objFr)
+    local convPathIn = makeInput("ConvPath", "Filename in SoPeRa_Builds or full path", objFr)
 
     local function getConverterFileOptions()
         ensureFolder()
@@ -5441,7 +5318,7 @@ local function createUI()
         end
         table.sort(files, function(a, b) return tostring(a.display):lower() < tostring(b.display):lower() end)
         if #files == 0 then
-            return {"Нет файлов для конвертации"}
+            return {"No converter files found"}
         end
         return files
     end
@@ -5466,18 +5343,18 @@ local function createUI()
     jsonSettingsLayout.Padding = UDim.new(0, 6)
     jsonSettingsLayout.Parent = jsonSettings
 
-    makeLabel("JSON ИЗОБРАЖЕНИЙ (ROTATED RECTANGLES)", jsonSettings)
-    local outNameIn = makeInput("ConvOutName", "Имя выходной постройки", jsonSettings)
+    makeLabel("IMAGE JSON (ROTATED RECTANGLES)", jsonSettings)
+    local outNameIn = makeInput("ConvOutName", "Output build name", jsonSettings)
     outNameIn.Text = "image_build"
-    local scaleIn = makeInput("ConvScale", "Масштаб", jsonSettings)
+    local scaleIn = makeInput("ConvScale", "Scale", jsonSettings)
     scaleIn.Text = "0.035"
-    local widthIn = makeInput("ConvWidth", "Ширина в студиях (0 = масштаб)", jsonSettings)
+    local widthIn = makeInput("ConvWidth", "Width studs (0 = scale)", jsonSettings)
     widthIn.Text = "0"
-    local lengthIn = makeInput("ConvLength", "Длина в студиях (0 = масштаб)", jsonSettings)
+    local lengthIn = makeInput("ConvLength", "Length studs (0 = scale)", jsonSettings)
     lengthIn.Text = "0"
-    local thickIn = makeInput("ConvThick", "Толщина", jsonSettings)
+    local thickIn = makeInput("ConvThick", "Thickness", jsonSettings)
     thickIn.Text = "0.001"
-    makeLabel("МАТЕРИАЛ", jsonSettings)
+    makeLabel("MATERIAL", jsonSettings)
     local matBtn, _ = makeDropdown("ConvMat", function()
         return {"PlasticBlock", "TitaniumBlock", "MetalBlock"}
     end, jsonSettings, function(_) end)
@@ -5493,26 +5370,26 @@ local function createUI()
     local objSettingsLayout = Instance.new("UIListLayout")
     objSettingsLayout.Padding = UDim.new(0, 6)
     objSettingsLayout.Parent = objSettings
-    makeLabel("ПОВЕРХНОСТЬ OBJ", objSettings)
-    local objOutNameIn = makeInput("ObjOutName", "Имя выходной постройки", objSettings)
+    makeLabel("OBJ SURFACE", objSettings)
+    local objOutNameIn = makeInput("ObjOutName", "Output build name", objSettings)
     objOutNameIn.Text = "mesh_build"
-    local objScaleIn = makeInput("ObjScale", "Масштаб", objSettings)
+    local objScaleIn = makeInput("ObjScale", "Scale", objSettings)
     objScaleIn.Text = "1"
-    local objThickIn = makeInput("ObjThickness", "Толщина панели", objSettings)
+    local objThickIn = makeInput("ObjThickness", "Panel thickness", objSettings)
     objThickIn.Text = "0.2"
-    makeLabel("РЕЖИМ", objSettings)
+    makeLabel("MODE", objSettings)
     local objModeBtn, _ = makeDropdown("ObjMode", function()
         return {
-            {name = "face", display = "Грань"},
-            {name = "wireframe", display = "Каркас"},
-            {name = "voxel", display = "Воксель"},
+            {name = "face", display = "Face"},
+            {name = "wireframe", display = "Wireframe"},
+            {name = "voxel", display = "Voxel"},
         }
     end, objSettings, function(mode)
         selectedObjMode = mode
     end)
-    objModeBtn.Text = "Грань"
+    objModeBtn.Text = "Face"
     objModeBtn.TextColor3 = Colors.Text
-    makeLabel("МАТЕРИАЛ", objSettings)
+    makeLabel("MATERIAL", objSettings)
     local objMatBtn, _ = makeDropdown("ObjConvMat", function()
         return {"PlasticBlock", "TitaniumBlock", "MetalBlock"}
     end, objSettings, function(_) end)
@@ -5522,7 +5399,7 @@ local function createUI()
     local function updateConverterPreviewButtons()
         for _, entry in ipairs(convPreviewButtons) do
             if entry.button and entry.button.Parent then
-                entry.button.Text = previewActive and "Очистить" or entry.label
+                entry.button.Text = previewActive and "Clear Preview" or entry.label
             end
         end
     end
@@ -5547,7 +5424,7 @@ local function createUI()
         end
         local prs = convertedBlocksToPRS(materialName, cleanBlocks)
         if not prs or not next(prs) then
-            setStatus("  Превью пустое")
+            setStatus("  Preview build is empty")
             return
         end
         currentBuild = prs
@@ -5556,14 +5433,14 @@ local function createUI()
         if updateBlocksDisplayGlobal then updateBlocksDisplayGlobal() end
         createPreview(currentBuild)
         updateConverterPreviewButtons()
-        setStatus("  Превью готово: " .. tostring(label or "источник"))
+        setStatus("  Preview ready: " .. tostring(label or "source"))
     end
-    local objPreviewBtn = makeBtn("ObjConvPreview", "Превью меша", objSettings, function()
+    local objPreviewBtn = makeBtn("ObjConvPreview", "Preview Mesh", objSettings, function()
         if previewActive then
             clearPreview()
             updateObjectsList()
             updateConverterPreviewButtons()
-            setStatus("  Превью очищено")
+            setStatus("  Preview cleared")
             return
         end
         local fullPath, pathErr = resolveConverterPath(convPathIn.Text ~= "" and convPathIn.Text or selectedConvFile)
@@ -5580,24 +5457,24 @@ local function createUI()
             return convertObjToBlocks(fullPath, sc, th, selectedObjMode, material)
         end)
         if not ok then
-            setStatus("  Ошибка превью: " .. tostring(outMaterial))
+            setStatus("  Preview error: " .. tostring(outMaterial))
             return
         end
         if err then
-            setStatus("  Ошибка превью: " .. tostring(err))
+            setStatus("  Preview error: " .. tostring(err))
             return
         end
         applyConvertedPreview(outMaterial, blocks, getFileStem(fullPath))
     end)
-    convPreviewButtons[#convPreviewButtons + 1] = {button = objPreviewBtn, label = "Превью меша"}
-    makeBtn("ObjConvRun", "Конвертировать OBJ -> .Build", objSettings, function()
+    convPreviewButtons[#convPreviewButtons + 1] = {button = objPreviewBtn, label = "Preview Mesh"}
+    makeBtn("ObjConvRun", "Convert Mesh -> .Build", objSettings, function()
         local fullPath, pathErr = resolveConverterPath(convPathIn.Text ~= "" and convPathIn.Text or selectedConvFile)
         if not fullPath then
             setStatus("  " .. tostring(pathErr))
             return
         end
         local outName = trimStr(objOutNameIn.Text)
-        if outName == "" then setStatus("  Введите имя выходного файла") ; return end
+        if outName == "" then setStatus("  Enter output name") ; return end
         local low = fullPath:lower()
         local sc = tonumber(objScaleIn.Text) or 1
         local th = tonumber(objThickIn.Text) or 0.2
@@ -5607,14 +5484,14 @@ local function createUI()
             return convertObjToBuild(fullPath, outName, sc, th, material, selectedObjMode)
         end)
         if not ok then
-            setStatus("  Ошибка конвертации: " .. tostring(outPath))
+            setStatus("  Convert error: " .. tostring(outPath))
             return
         end
         if err then
-            setStatus("  Ошибка конвертации: " .. tostring(err))
+            setStatus("  Convert error: " .. tostring(err))
             return
         end
-        setStatus("  Сохранено: " .. tostring(outPath))
+        setStatus("  Saved: " .. tostring(outPath))
         refreshFiles()
         refreshConvFiles()
     end)
@@ -5629,22 +5506,22 @@ local function createUI()
     schemSettingsLayout.Padding = UDim.new(0, 6)
     schemSettingsLayout.Parent = schemSettings
     makeLabel("MINECRAFT SCHEMATIC", schemSettings)
-    local schemOutNameIn = makeInput("SchemOutName", "Имя выходной постройки", schemSettings)
+    local schemOutNameIn = makeInput("SchemOutName", "Output build name", schemSettings)
     schemOutNameIn.Text = "schem_build"
-    local schemScaleIn = makeInput("SchemScale", "Студий на блок", schemSettings)
+    local schemScaleIn = makeInput("SchemScale", "Studs per block", schemSettings)
     schemScaleIn.Text = "1"
-    makeLabel("МАТЕРИАЛ", schemSettings)
+    makeLabel("MATERIAL", schemSettings)
     local schemMatBtn, _ = makeDropdown("SchemConvMat", function()
         return {"PlasticBlock", "TitaniumBlock", "MetalBlock"}
     end, schemSettings, function(_) end)
     schemMatBtn.Text = "PlasticBlock"
     schemMatBtn.TextColor3 = Colors.Text
-    local schemPreviewBtn = makeBtn("SchemConvPreview", "Превью схемы", schemSettings, function()
+    local schemPreviewBtn = makeBtn("SchemConvPreview", "Preview Schematic", schemSettings, function()
         if previewActive then
             clearPreview()
             updateObjectsList()
             updateConverterPreviewButtons()
-            setStatus("  Превью очищено")
+            setStatus("  Preview cleared")
             return
         end
         local fullPath, pathErr = resolveConverterPath(convPathIn.Text ~= "" and convPathIn.Text or selectedConvFile)
@@ -5658,17 +5535,17 @@ local function createUI()
             return convertMinecraftSchematicToBlocks(fullPath, sc, material)
         end)
         if not ok then
-            setStatus("  Ошибка превью: " .. tostring(outMaterial))
+            setStatus("  Preview error: " .. tostring(outMaterial))
             return
         end
         if err then
-            setStatus("  Ошибка превью: " .. tostring(err))
+            setStatus("  Preview error: " .. tostring(err))
             return
         end
         applyConvertedPreview(outMaterial, blocks, getFileStem(fullPath))
     end)
-    convPreviewButtons[#convPreviewButtons + 1] = {button = schemPreviewBtn, label = "Превью схемы"}
-    makeBtn("SchemConvRun", "Конвертировать SCHEM -> .Build", schemSettings, function()
+    convPreviewButtons[#convPreviewButtons + 1] = {button = schemPreviewBtn, label = "Preview Schematic"}
+    makeBtn("SchemConvRun", "Convert Schematic -> .Build", schemSettings, function()
         local fullPath, pathErr = resolveConverterPath(convPathIn.Text ~= "" and convPathIn.Text or selectedConvFile)
         if not fullPath then
             setStatus("  " .. tostring(pathErr))
@@ -5677,19 +5554,19 @@ local function createUI()
         local outName = trimStr(schemOutNameIn.Text)
         local sc = tonumber(schemScaleIn.Text) or 1
         local material = (schemMatBtn.Text and schemMatBtn.Text:match("([^%s]+)")) or "PlasticBlock"
-        if outName == "" then setStatus("  Введите имя выходного файла") ; return end
+        if outName == "" then setStatus("  Enter output name") ; return end
         local ok, outPath, err = pcall(function()
             return convertMinecraftSchematicToBuild(fullPath, outName, sc, material)
         end)
         if not ok then
-            setStatus("  Ошибка конвертации: " .. tostring(outPath))
+            setStatus("  Convert error: " .. tostring(outPath))
             return
         end
         if err then
-            setStatus("  Ошибка конвертации: " .. tostring(err))
+            setStatus("  Convert error: " .. tostring(err))
             return
         end
-        setStatus("  Сохранено: " .. tostring(outPath))
+        setStatus("  Saved: " .. tostring(outPath))
         refreshFiles()
         refreshConvFiles()
     end)
@@ -5759,14 +5636,14 @@ local function createUI()
     end
 
     convFileBtn, refreshConvFiles = makeDropdown("ConvFile", getConverterFileOptions, convFileWrap, function(fileName)
-        if fileName == "Нет файлов для конвертации" then return end
+        if fileName == "No converter files found" then return end
         setConvFile(fileName)
     end)
     convRefreshBtn.MouseButton1Click:Connect(function()
         refreshConvFiles()
         local opts = getConverterFileOptions()
         local count = (type(opts[1]) == "string") and 0 or #opts
-        setStatus("  Список файлов конвертера обновлён: " .. tostring(count))
+        setStatus("  Converter file list refreshed: " .. tostring(count))
     end)
     convPathIn.FocusLost:Connect(function()
         local txt = trimStr(convPathIn.Text)
@@ -5779,19 +5656,19 @@ local function createUI()
                 objSettings.Visible = false
                 schemSettings.Visible = false
                 resizeConv()
-                setStatus("  Папка-источник: " .. txt)
+                setStatus("  Source folder set: " .. txt)
             else
                 setConvFile(txt)
             end
         end
     end)
 
-    local jsonPreviewBtn = makeBtn("ConvPreview", "Превью изображения", jsonSettings, function()
+    local jsonPreviewBtn = makeBtn("ConvPreview", "Preview Image JSON", jsonSettings, function()
         if previewActive then
             clearPreview()
             updateObjectsList()
             updateConverterPreviewButtons()
-            setStatus("  Превью очищено")
+            setStatus("  Preview cleared")
             return
         end
         local fullPath, pathErr = resolveConverterPath(convPathIn.Text ~= "" and convPathIn.Text or selectedConvFile)
@@ -5809,19 +5686,19 @@ local function createUI()
             return convertGeometrizeJsonToBlocks(txt, sc, th, material, targetW, targetL)
         end)
         if not ok then
-            setStatus("  Ошибка превью: " .. tostring(outMaterial))
+            setStatus("  Preview error: " .. tostring(outMaterial))
             return
         end
         if err then
-            setStatus("  Ошибка превью: " .. tostring(err))
+            setStatus("  Preview error: " .. tostring(err))
             return
         end
         applyConvertedPreview(outMaterial, blocks, getFileStem(fullPath))
     end)
-    convPreviewButtons[#convPreviewButtons + 1] = {button = jsonPreviewBtn, label = "Превью изображения"}
-    makeBtn("ConvRun", "Конвертировать -> .Build", jsonSettings, function()
+    convPreviewButtons[#convPreviewButtons + 1] = {button = jsonPreviewBtn, label = "Preview Image JSON"}
+    makeBtn("ConvRun", "Convert -> .Build", jsonSettings, function()
         if selectedConvKind ~= "json" then
-            setStatus("  Выберите .json файл")
+            setStatus("  Select a .json file")
             return
         end
         local fullPath, pathErr = resolveConverterPath(convPathIn.Text ~= "" and convPathIn.Text or selectedConvFile)
@@ -5835,9 +5712,9 @@ local function createUI()
         local targetL = tonumber(lengthIn.Text) or 0
         local th = tonumber(thickIn.Text) or 0.001
         local material = (matBtn and matBtn.Text and matBtn.Text:match("([^%s]+)")) or "PlasticBlock"
-        if outName == "" then setStatus("  Введите имя выходного файла") ; return end
+        if outName == "" then setStatus("  Enter output name") ; return end
         if not fullPath:lower():match("%.json$") then
-            setStatus("  Имя должно заканчиваться на .json")
+            setStatus("  JSON name must end with .json")
             return
         end
         local ok, outOrErr, err2 = pcall(function()
@@ -5845,44 +5722,40 @@ local function createUI()
             return convertGeometrizeJsonToBuild(txt, outName, sc, th, material, targetW, targetL)
         end)
         if not ok then
-            setStatus("  Ошибка конвертации: " .. tostring(outOrErr))
+            setStatus("  Convert error: " .. tostring(outOrErr))
             return
         end
         local outPath = outOrErr
         if err2 then
-            setStatus("  Ошибка конвертации: " .. tostring(err2))
+            setStatus("  Convert error: " .. tostring(err2))
             return
         end
-        setStatus("  Сохранено: " .. tostring(outPath))
+        setStatus("  Saved: " .. tostring(outPath))
         refreshFiles()
         refreshConvFiles()
     end)
 
-    -- ============================================================
-    --  ВКЛАДКА INF БЛОК
-    -- ============================================================
-    makeLabel("INF БЛОК", infFr)
-    local infToggle = makeBtn("InfBlockToggle", "Inf Block: " .. (Settings.infBlockEnabled and "ВКЛ" or "ВЫКЛ"), infFr, function()
+    makeLabel("INF BLOCK", infFr)
+    local infToggle = makeBtn("InfBlockToggle", "Inf Block: " .. (Settings.infBlockEnabled and "ON" or "OFF"), infFr, function()
         Settings.infBlockEnabled = not Settings.infBlockEnabled
         local b = infFr:FindFirstChild("InfBlockToggle")
         if b then
-            b.Text = "Inf Block: " .. (Settings.infBlockEnabled and "ВКЛ" or "ВЫКЛ")
+            b.Text = "Inf Block: " .. (Settings.infBlockEnabled and "ON" or "OFF")
             b.BackgroundColor3 = Settings.infBlockEnabled and Color3.fromRGB(16,32,16) or Color3.fromRGB(28,28,28)
         end
         saveSettings()
     end)
 
-    -- ============================================================
-    --  ВКЛАДКА ПЕРЕМЕЩЕНИЕ
-    -- ============================================================
+
+
     local noclipActive = false
     local noclipConn = nil
-    makeLabel("НОКЛИП / ПОЛЁТ", movFr)
-    makeBtn("NoclipBtn", "NoClip: ВЫКЛ", movFr, function()
+    makeLabel("NOCLIP / FLY", movFr)
+    makeBtn("NoclipBtn", "NoClip: OFF", movFr, function()
         noclipActive = not noclipActive
         local b = movFr:FindFirstChild("NoclipBtn")
         if b then
-            b.Text = "NoClip: " .. (noclipActive and "ВКЛ" or "ВЫКЛ")
+            b.Text = "NoClip: " .. (noclipActive and "ON" or "OFF")
             b.BackgroundColor3 = noclipActive and Color3.fromRGB(16,32,16) or Color3.fromRGB(28,28,28)
         end
         if noclipActive then
@@ -5907,16 +5780,16 @@ local function createUI()
     local flySpeed = 50
     local flyConn = nil
     local flyBV = nil
-    makeLabel("Скорость полёта:", movFr)
-    local flySlider, flySetVal = makeSlider("FlySpd", 10, 300, flySpeed, movFr, "Скорость",
+    makeLabel("Fly Speed:", movFr)
+    local flySlider, flySetVal = makeSlider("FlySpd", 10, 300, flySpeed, movFr, "Fly Speed",
         function(v) return math.floor(v) end,
         function(v) flySpeed = math.floor(v) end
     )
-    makeBtn("FlyBtn", "Полет: ВЫКЛ", movFr, function()
+    makeBtn("FlyBtn", "Fly: OFF", movFr, function()
         flyActive = not flyActive
         local b = movFr:FindFirstChild("FlyBtn")
         if b then
-            b.Text = "Полет: " .. (flyActive and "ВКЛ" or "ВЫКЛ")
+            b.Text = "Fly: " .. (flyActive and "ON" or "OFF")
             b.BackgroundColor3 = flyActive and Color3.fromRGB(16,32,16) or Color3.fromRGB(28,28,28)
         end
         if flyActive then
@@ -5946,8 +5819,12 @@ local function createUI()
             if flyBV then flyBV:Destroy() ; flyBV = nil end
         end
     end)
+    end 
 
-    makeLabel("BHOP (CS:GO ДВИЖЕНИЕ)", movFr)
+
+    do
+
+    makeLabel("BHOP (CS:GO Movement)", movFr)
     local bhopEnabled = false
     local bhopConn = nil
     local BhopMovement = nil
@@ -6114,11 +5991,11 @@ local function createUI()
         return M
     end
 
-    makeBtn("BhopBtn", "BHOP (CS:GO): ВЫКЛ", movFr, function()
+    makeBtn("BhopBtn", "BHOP (CS:GO): OFF", movFr, function()
         bhopEnabled = not bhopEnabled
         local b = movFr:FindFirstChild("BhopBtn")
         if b then
-            b.Text = "BHOP (CS:GO): " .. (bhopEnabled and "ВКЛ" or "ВЫКЛ")
+            b.Text = "BHOP (CS:GO): " .. (bhopEnabled and "ON" or "OFF")
             b.BackgroundColor3 = bhopEnabled and Color3.fromRGB(16,32,16) or Color3.fromRGB(28,28,28)
         end
         if bhopEnabled then
@@ -6130,13 +6007,13 @@ local function createUI()
         end
     end)
 
-    makeLabel("КАСАТЕЛЬНЫЙ ФЛИНГ", movFr)
+    makeLabel("TOUCH FLING", movFr)
     local flingActive = false
-    makeBtn("FlingBtn", "Fling: ВЫКЛ", movFr, function()
+    makeBtn("FlingBtn", "Touch Fling: OFF", movFr, function()
         flingActive = not flingActive
         local b = movFr:FindFirstChild("FlingBtn")
         if b then
-            b.Text = "Fling: " .. (flingActive and "ВКЛ" or "ВЫКЛ")
+            b.Text = "Touch Fling: " .. (flingActive and "ON" or "OFF")
             b.BackgroundColor3 = flingActive and Color3.fromRGB(16,32,16) or Color3.fromRGB(28,28,28)
         end
         if flingActive then
@@ -6160,14 +6037,14 @@ local function createUI()
         end
     end)
 
-    makeLabel("НОЖ HUD", movFr)
+    makeLabel("KNIFE HUD", movFr)
     local knifeEnabled = false
     local knifeGui = nil
-    makeBtn("KnifeBtn", "Нож HUD: ВЫКЛ", movFr, function()
+    makeBtn("KnifeBtn", "Knife HUD: OFF", movFr, function()
         knifeEnabled = not knifeEnabled
         local b = movFr:FindFirstChild("KnifeBtn")
         if b then
-            b.Text = "Нож HUD: " .. (knifeEnabled and "ВКЛ" or "ВЫКЛ")
+            b.Text = "Knife HUD: " .. (knifeEnabled and "ON" or "OFF")
             b.BackgroundColor3 = knifeEnabled and Color3.fromRGB(16,32,16) or Color3.fromRGB(28,28,28)
         end
         if knifeEnabled then
@@ -6193,23 +6070,20 @@ local function createUI()
         end
     end)
 
-    -- ============================================================
-    --  ВКЛАДКА РАЗНОЕ
-    -- ============================================================
-    makeLabel("ПОКУПКИ В МАГАЗИНЕ", miscFr)
-    makeBtn("DragonH", "Гарпун дракона", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(1109792341,"Product") end)
-    makeBtn("CookieW", "Печенье-колёса", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(1126385328,"Product") end)
-    makeBtn("MegaT", "Оранжевые турбины", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(139121474,"Product") end)
-    makeBtn("PineT", "Купить сосну", miscFr, function() workspace.ItemBoughtFromShop:InvokeServer("PineTree",1) end)
+    makeLabel("SHOP PURCHASES", miscFr)
+    makeBtn("DragonH", "Dragon Harpoon", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(1109792341,"Product") end)
+    makeBtn("CookieW", "Cookie Wheels", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(1126385328,"Product") end)
+    makeBtn("MegaT", "Orange Mega Turbines", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(139121474,"Product") end)
+    makeBtn("PineT", "Buy Pine Tree", miscFr, function() workspace.ItemBoughtFromShop:InvokeServer("PineTree",1) end)
 
-    makeLabel("ТЕЛЕПОРТЫ", miscFr)
-    makeBtn("EasterTP", "Пасхальное событие", miscFr, function() game:GetService("TeleportService"):Teleport(1930863474) end)
-    makeBtn("ChristmasTP", "Рождественское событие", miscFr, function() game:GetService("TeleportService"):Teleport(1930866268) end)
-    makeBtn("TestTP", "Тестовое место", miscFr, function() game:GetService("TeleportService"):Teleport(1930665568) end)
+    makeLabel("TELEPORTS", miscFr)
+    makeBtn("EasterTP", "Easter Event Place", miscFr, function() game:GetService("TeleportService"):Teleport(1930863474) end)
+    makeBtn("ChristmasTP", "Christmas Event Place", miscFr, function() game:GetService("TeleportService"):Teleport(1930866268) end)
+    makeBtn("TestTP", "Test Place", miscFr, function() game:GetService("TeleportService"):Teleport(1930665568) end)
 
-    makeLabel("БОЕВЫЕ УТИЛИТЫ", miscFr)
+    makeLabel("COMBAT UTILS", miscFr)
     if string.find(string.lower(currentExecutorName()), "xeno", 1, true) or string.find(string.lower(currentExecutorName()), "solara", 1, true) then
-        makeLabel(currentExecutorName() .. ": Может не работать", miscFr)
+        makeLabel(currentExecutorName() .. ": Kill route may not work on this executor", miscFr)
     end
     local killTargetName = nil
     local killTargetDD = nil
@@ -6222,7 +6096,7 @@ local function createUI()
     combatSelectedLabel.BackgroundColor3 = Colors.PanelSoft
     combatSelectedLabel.BackgroundTransparency = 0
     combatSelectedLabel.BorderSizePixel = 0
-    combatSelectedLabel.Text = "  Выбрано: нет"
+    combatSelectedLabel.Text = "  Selected: none"
     combatSelectedLabel.TextColor3 = Colors.Muted
     combatSelectedLabel.TextSize = 10
     combatSelectedLabel.Font = Enum.Font.GothamMedium
@@ -6241,24 +6115,24 @@ local function createUI()
             end
         end
         table.sort(names)
-        combatSelectedLabel.Text = "  Выбрано: " .. (#names > 0 and table.concat(names, ", ") or "нет")
+        combatSelectedLabel.Text = "  Selected: " .. (#names > 0 and table.concat(names, ", ") or "none")
         return names
     end
 
-    makeBtn("CombatToggleSelected", "Добавить/убрать игрока", miscFr, function()
+    makeBtn("CombatToggleSelected", "Add / Remove Selected Player", miscFr, function()
         if not killTargetName or not Players:FindFirstChild(killTargetName) then
-            setStatus("  Сначала выберите игрока")
+            setStatus("  Pick a player first")
             return
         end
         combatSelected[killTargetName] = not combatSelected[killTargetName]
         local names = refreshCombatSelectedLabel()
-        setStatus("  Выбрано для боя: " .. tostring(#names))
+        setStatus("  Combat selected: " .. tostring(#names))
     end)
 
-    makeBtn("CombatClearSelected", "Очистить список", miscFr, function()
+    makeBtn("CombatClearSelected", "Clear Selected Players", miscFr, function()
         combatSelected = {}
         refreshCombatSelectedLabel()
-        setStatus("  Список очищен")
+        setStatus("  Combat selection cleared")
     end)
 
     local miscStatus = Instance.new("TextLabel")
@@ -6266,7 +6140,7 @@ local function createUI()
     miscStatus.BackgroundColor3 = Colors.PanelSoft
     miscStatus.BackgroundTransparency = 0
     miscStatus.BorderSizePixel = 0
-    miscStatus.Text = "  Готов"
+    miscStatus.Text = "  Misc ready"
     miscStatus.TextColor3 = Colors.Text
     miscStatus.TextSize = 10
     miscStatus.Font = Enum.Font.GothamMedium
@@ -6275,7 +6149,7 @@ local function createUI()
     stylizeCard(miscStatus, Colors.PanelSoft, Colors.Border, 3)
     MiscStatusLabelRef = miscStatus
 
-    makeBtn("PressAllClickDetectors", "Нажать все ClickDetectors", miscFr, function()
+    makeBtn("PressAllClickDetectors", "Press All ClickDetectors", miscFr, function()
         local clicks = 0
         for _, obj in ipairs(Workspace:GetDescendants()) do
             if obj:IsA("ClickDetector") then
@@ -6286,10 +6160,10 @@ local function createUI()
                 task.wait(0.01)
             end
         end
-        setStatus("  Нажато ClickDetectors: " .. clicks)
+        setStatus("  ClickDetectors pressed: " .. clicks)
     end)
 
-    makeBtn("KillTargetBtn", "Убить цель", miscFr, function()
+    makeBtn("KillTargetBtn", "Kill Target", miscFr, function()
         playUISound(UISoundConfig.click)
         local targetPlayer = nil
         if killTargetName then
@@ -6321,7 +6195,7 @@ local function createUI()
             end
         end
         if not targetPlayer or targetPlayer == LocalPlayer then
-            setStatus("  Сначала выберите цель")
+            setStatus("  Select a valid target first")
             return
         end
 
@@ -6329,7 +6203,7 @@ local function createUI()
         local normalStages = boatStages and boatStages:FindFirstChild("NormalStages")
         local forest = normalStages and normalStages:FindFirstChild("ForestStage")
         if not forest then
-            setStatus("  ForestStage не найден")
+            setStatus("  ForestStage not found")
             return
         end
 
@@ -6345,11 +6219,11 @@ local function createUI()
             end
         end
         if not triggerPart then
-            setStatus("  Триггерная часть леса не найдена")
+            setStatus("  Forest trigger part not found")
             return
         end
 
-        setStatus("  Запуск убийства " .. targetPlayer.Name)
+        setStatus("  Running kill route on " .. targetPlayer.Name)
         task.spawn(function()
             local originRoot = Character and Character:FindFirstChild("HumanoidRootPart")
             local originCFrame = originRoot and originRoot.CFrame
@@ -6386,14 +6260,14 @@ local function createUI()
                 end
             end
 
-            setStatus("  Активация лесной стены...")
+            setStatus("  Triggering forest wall...")
             teleportCharacterTo(triggerPart.Position + Vector3.new(0, 2.6, 0))
             task.wait(0.15)
             local touched = touchPart(triggerPart)
-            setStatus("  Активация стены... " .. (touched and "ок" or "не удалось"))
+            setStatus("  Triggering forest wall... " .. (touched and "touch ok" or "touch failed"))
             task.wait(1)
 
-            setStatus("  Ожидание комнаты волшебника...")
+            setStatus("  Waiting for wizard room...")
             local wizardRoom = nil
             local wizardDeadline = tick() + 8
             repeat
@@ -6402,7 +6276,7 @@ local function createUI()
                 task.wait(0.15)
             until tick() > wizardDeadline
             if not wizardRoom then
-                restoreKillState("  Комната волшебника не появилась")
+                restoreKillState("  WizardRoom did not appear")
                 return
             end
 
@@ -6421,11 +6295,11 @@ local function createUI()
             end
             local bookClick = bookModel and bookModel:FindFirstChildWhichIsA("ClickDetector", true)
             if not bookClick then
-                restoreKillState("  ClickDetector книги не найден")
+                restoreKillState("  Wizard book ClickDetector not found")
                 return
             end
 
-            setStatus("  Перемещение в комнату волшебника...")
+            setStatus("  Moving to wizard room...")
             local lockPos = Vector3.new(311.19122314453125, 3.3999156951904297, 1180.4921875)
             for _ = 1, 6 do
                 teleportCharacterTo(lockPos)
@@ -6436,7 +6310,7 @@ local function createUI()
                 hrp.Anchored = true
             end
 
-            setStatus("  Нажатие на книгу волшебника...")
+            setStatus("  Pressing wizard book...")
             for _ = 1, 5 do
                 pcall(function() fireclickdetector(bookClick) end)
                 task.wait(0.18)
@@ -6449,12 +6323,12 @@ local function createUI()
             targetChar = targetPlayer.Character
             local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
             if not targetRoot then
-                restoreKillState("  У цели нет персонажа")
+                restoreKillState("  Target has no character")
                 return
             end
 
             local moved = 0
-            setStatus("  Притягивание клонов к цели...")
+            setStatus("  Pulling clones to target...")
             if hrp then
                 hrp.Anchored = true
             end
@@ -6482,16 +6356,16 @@ local function createUI()
                 end
                 task.wait(0.08)
             end
-            restoreKillState("  Убийство завершено | частей: " .. moved)
+            restoreKillState("  Kill route done | moved parts: " .. moved)
         end)
     end)
 
-    makeLabel("ДУПЛИКАТ ПОСТРОЙКИ", miscFr)
-    local dupeAmtIn = makeInput("DupeAmt", "Количество (1-50)", miscFr)
+    makeLabel("DUPE BUILD", miscFr)
+    local dupeAmtIn = makeInput("DupeAmt", "Amount (1-50)", miscFr)
     dupeAmtIn.Text = "10"
-    local dupeSlotIn = makeInput("DupeSlot", "Слот (1-99)", miscFr)
+    local dupeSlotIn = makeInput("DupeSlot", "Slot (1-99)", miscFr)
     dupeSlotIn.Text = "42"
-    local dupeStatusLbl = makeLabel("Готов к дупликации", miscFr)
+    local dupeStatusLbl = makeLabel("Ready to dupe", miscFr)
     local dupeProgress = Instance.new("Frame")
     dupeProgress.Name = "DupeProgress"
     dupeProgress.Size = UDim2.new(1, -8, 0, 6)
@@ -6506,43 +6380,43 @@ local function createUI()
     dpf.BorderSizePixel = 0
     dpf.Parent = dupeProgress
     local dpfc = Instance.new("UICorner") ; dpfc.CornerRadius = UDim.new(0,3) ; dpfc.Parent = dpf
-    makeBtn("DupeBtn", "Дублировать", miscFr, function()
+    makeBtn("DupeBtn", "Dupe Build", miscFr, function()
         local dupe = tonumber(dupeAmtIn.Text) or 10
         local slot = tonumber(dupeSlotIn.Text) or 42
-        if dupe < 1 or dupe > 50 then setStatus("  Количество должно быть 1-50") ; return end
-        if slot < 1 or slot > 99 then setStatus("  Слот должен быть 1-99") ; return end
-        dupeStatusLbl.Text = "Дублирование 0/" .. dupe .. " (слот " .. slot .. ")..."
+        if dupe < 1 or dupe > 50 then setStatus("  Amount must be 1-50") ; return end
+        if slot < 1 or slot > 99 then setStatus("  Slot must be 1-99") ; return end
+        dupeStatusLbl.Text = "Duping 0/" .. dupe .. " (slot " .. slot .. ")..."
         dpf.Size = UDim2.new(0, 0, 1, 0)
         for i = 1, dupe do
             workspace.LoadBoatData:FireServer(slot, 0)
             task.wait(0.05)
             local pct = i / dupe
             dpf.Size = UDim2.new(pct, 0, 1, 0)
-            dupeStatusLbl.Text = "Дублирование " .. i .. "/" .. dupe .. " (" .. math.floor(pct*100) .. "%)"
+            dupeStatusLbl.Text = "Duping " .. i .. "/" .. dupe .. " (" .. math.floor(pct*100) .. "%)"
         end
         dpf.Size = UDim2.new(1, 0, 1, 0)
         dpf.BackgroundColor3 = Color3.fromRGB(80,200,80)
-        dupeStatusLbl.Text = "Дубликация завершена! " .. dupe .. "x загружено из слота " .. slot
-    end)
+        dupeStatusLbl.Text = "Dupe done! " .. dupe .. "x loaded from slot " .. slot
+        end)
 
-    makeLabel("АВТО-ФАРМ", miscFr)
+    makeLabel("AUTO FARM", miscFr)
     local farmActive = false
-    makeBtn("AutoFarmBtn", "Авто-фарм: ВЫКЛ", miscFr, function()
+    makeBtn("AutoFarmBtn", "Auto Farm: OFF", miscFr, function()
         farmActive = not farmActive
         local b = miscFr:FindFirstChild("AutoFarmBtn")
         if b then
-            b.Text = "Авто-фарм: " .. (farmActive and "ВКЛ" or "ВЫКЛ")
+            b.Text = "Auto Farm: " .. (farmActive and "ON" or "OFF")
             b.BackgroundColor3 = farmActive and Color3.fromRGB(16,32,16) or Color3.fromRGB(28,28,28)
         end
         if farmActive then
             task.spawn(function()
                 local stages = workspace:FindFirstChild("BoatStages")
-                if not stages then setStatus("  BoatStages не найдены") ; farmActive = false ; return end
+                if not stages then setStatus("  BoatStages not found") ; farmActive = false ; return end
                 local normalStages = stages:FindFirstChild("NormalStages")
-                if not normalStages then setStatus("  NormalStages не найдены") ; farmActive = false ; return end
+                if not normalStages then setStatus("  NormalStages not found") ; farmActive = false ; return end
                 local theEnd = normalStages:FindFirstChild("TheEnd")
                 local gc = theEnd and theEnd:FindFirstChild("GoldenChest") and theEnd.GoldenChest:FindFirstChild("Trigger")
-                if not gc then setStatus("  GoldenChest не найден") ; farmActive = false ; return end
+                if not gc then setStatus("  GoldenChest not found") ; farmActive = false ; return end
                 local runs = 0
                 while farmActive do
                     local c = LocalPlayer.Character
@@ -6556,7 +6430,7 @@ local function createUI()
                             c = LocalPlayer.Character
                             hrp = c and c:FindFirstChild("HumanoidRootPart")
                             if hrp then hrp.CFrame = dp.CFrame end
-                            setStatus("  Фарм этап " .. i .. " | заходов: " .. runs)
+                            setStatus("  Farm stage " .. i .. " | runs: " .. runs)
                             task.wait(1.5)
                         end
                     end
@@ -6574,17 +6448,16 @@ local function createUI()
                     farmConn:Disconnect()
                     task.wait(2.5)
                     runs = runs + 1
-                    setStatus("  Фарм завершён: " .. runs)
+                    setStatus("  Farm runs done: " .. runs)
                 end
-                setStatus("  Фарм остановлен | всего: " .. (runs or 0))
+                setStatus("  Farm stopped | total: " .. (runs or 0))
             end)
         end
     end)
+    end 
 
-    -- ============================================================
-    --  ВКЛАДКА ФОРМЫ
-    -- ============================================================
-    makeLabel("ГЕНЕРАТОР ФОРМ", rainFr)
+    do 
+    makeLabel("SHAPE BUILDER", rainFr)
     local shapeBlockName = "WoodBlock"
     local function getBlockOpts()
         local opts = {}
@@ -6689,9 +6562,9 @@ local function createUI()
         fr.Parent = rainFr
         local lay = Instance.new("UIListLayout")
         lay.Parent = fr
-        local getR = makeNumInput("Радиус:", 10, 1, 999999, 1, fr)
-        local getSeg = makeNumInput("Сегменты:", 12, 3, 9999, 1, fr)
-        local getThick = makeNumInput("Толщина:", 0.2, 0.01, 999999, 0.1, fr)
+        local getR = makeNumInput("Radius:", 10, 1, 999999, 1, fr)
+        local getSeg = makeNumInput("Segments:", 12, 3, 9999, 1, fr)
+        local getThick = makeNumInput("Thickness:", 0.2, 0.01, 999999, 0.1, fr)
         shapeFrames.sphere = fr
         shapeFrames._sph = {getR, getSeg, getThick}
     end
@@ -6704,11 +6577,11 @@ local function createUI()
         fr.Parent = rainFr
         local lay = Instance.new("UIListLayout")
         lay.Parent = fr
-        local getMR = makeNumInput("Бол. радиус:", 10, 1, 999999, 1, fr)
-        local getmr = makeNumInput("Мал. радиус:", 3, 0.1, 999999, 0.5, fr)
-        local getMS = makeNumInput("Бол. сегменты:", 24, 3, 9999, 2, fr)
-        local getms = makeNumInput("Мал. сегменты:", 12, 3, 9999, 2, fr)
-        local getThick = makeNumInput("Толщина:", 0.2, 0.01, 999999, 0.1, fr)
+        local getMR = makeNumInput("Major Radius:", 10, 1, 999999, 1, fr)
+        local getmr = makeNumInput("Minor Radius:", 3, 0.1, 999999, 0.5, fr)
+        local getMS = makeNumInput("Major Segs:", 24, 3, 9999, 2, fr)
+        local getms = makeNumInput("Minor Segs:", 12, 3, 9999, 2, fr)
+        local getThick = makeNumInput("Thickness:", 0.2, 0.01, 999999, 0.1, fr)
         shapeFrames.donut = fr
         shapeFrames._don = {getMR, getmr, getMS, getms, getThick}
     end
@@ -6721,9 +6594,9 @@ local function createUI()
         fr.Parent = rainFr
         local lay = Instance.new("UIListLayout")
         lay.Parent = fr
-        local getSz = makeNumInput("Размер:", 5, 1, 999999, 1, fr)
-        local getLy = makeNumInput("Слои:", 1, 1, 999999, 1, fr)
-        local getBSz = makeNumInput("Размер блока:", 4, 0.1, 999999, 1, fr)
+        local getSz = makeNumInput("Size:", 5, 1, 999999, 1, fr)
+        local getLy = makeNumInput("Layers:", 1, 1, 999999, 1, fr)
+        local getBSz = makeNumInput("Block Size:", 4, 0.1, 999999, 1, fr)
         shapeFrames.cube = fr
         shapeFrames._cub = {getSz, getLy, getBSz}
     end
@@ -6736,9 +6609,9 @@ local function createUI()
         fr.Parent = rainFr
         local lay = Instance.new("UIListLayout")
         lay.Parent = fr
-        local getBase = makeNumInput("Основание:", 8, 1, 999999, 1, fr)
-        local getLy = makeNumInput("Слои:", 6, 1, 999999, 1, fr)
-        local getBSz = makeNumInput("Размер блока:", 4, 0.1, 999999, 1, fr)
+        local getBase = makeNumInput("Base:", 8, 1, 999999, 1, fr)
+        local getLy = makeNumInput("Layers:", 6, 1, 999999, 1, fr)
+        local getBSz = makeNumInput("Block Size:", 4, 0.1, 999999, 1, fr)
         shapeFrames.pyramid = fr
         shapeFrames._pyr = {getBase, getLy, getBSz}
     end
@@ -6751,10 +6624,10 @@ local function createUI()
         fr.Parent = rainFr
         local lay = Instance.new("UIListLayout")
         lay.Parent = fr
-        local getR = makeNumInput("Радиус:", 6, 1, 999999, 1, fr)
-        local getH = makeNumInput("Высота:", 10, 1, 999999, 1, fr)
-        local getSeg = makeNumInput("Сегменты:", 12, 3, 9999, 1, fr)
-        local getThick = makeNumInput("Толщина:", 0.2, 0.01, 999999, 0.1, fr)
+        local getR = makeNumInput("Radius:", 6, 1, 999999, 1, fr)
+        local getH = makeNumInput("Height:", 10, 1, 999999, 1, fr)
+        local getSeg = makeNumInput("Segments:", 12, 3, 9999, 1, fr)
+        local getThick = makeNumInput("Thickness:", 0.2, 0.01, 999999, 0.1, fr)
         shapeFrames.cylinder = fr
         shapeFrames._cyl = {getR, getH, getSeg, getThick}
     end
@@ -6767,11 +6640,11 @@ local function createUI()
         fr.Parent = rainFr
         local lay = Instance.new("UIListLayout")
         lay.Parent = fr
-        local getLy = makeNumInput("Этажи:", 5, 1, 999999, 1, fr)
-        local getW = makeNumInput("Ширина:", 20, 1, 999999, 5, fr)
-        local getD = makeNumInput("Глубина:", 20, 1, 999999, 5, fr)
-        local getBH = makeNumInput("Высота этажа:", 4, 1, 999999, 1, fr)
-        local getGap = makeNumInput("Зазор:", 8, 0, 999999, 1, fr)
+        local getLy = makeNumInput("Layers:", 5, 1, 999999, 1, fr)
+        local getW = makeNumInput("Width:", 20, 1, 999999, 5, fr)
+        local getD = makeNumInput("Depth:", 20, 1, 999999, 5, fr)
+        local getBH = makeNumInput("Floor H:", 4, 1, 999999, 1, fr)
+        local getGap = makeNumInput("Gap:", 8, 0, 999999, 1, fr)
         shapeFrames.floors = fr
         shapeFrames._flr = {getLy, getW, getD, getBH, getGap}
     end
@@ -6780,9 +6653,9 @@ local function createUI()
         shapeFrames[sn].Visible = (sn == shapeType)
     end
 
-    local getHOff = makeNumInput("Смещение по Y:", 15, 0, 100, 1, rainFr)
+    local getHOff = makeNumInput("Height Offset:", 15, 0, 100, 1, rainFr)
 
-    makeLabel("ИМЯ ФАЙЛА", rainFr)
+    makeLabel("FILE NAME", rainFr)
     local shapeFileInput = makeInput("ShapeFileInput", "my_shape", rainFr)
     shapeFileInput.Text = "my_shape"
 
@@ -6951,10 +6824,10 @@ local function createUI()
         for _, p in pairs(shPrevFolder:GetChildren()) do p:Destroy() end
     end
 
-    makeBtn("ShPreviewBtn", "Превью", rainFr, function()
+    makeBtn("ShPreviewBtn", "Preview", rainFr, function()
         clearShPrev()
         local entries = genEntries()
-        if #entries == 0 then setStatus("  Пустая форма") return end
+        if #entries == 0 then setStatus("  Empty shape") return end
         local hrp = Character and Character:FindFirstChild("HumanoidRootPart")
         local origin = hrp and (hrp.CFrame + Vector3.new(0, getHOff(), 0)) or CFrame.new(0, getHOff(), 0)
         local pp = Instance.new("Part")
@@ -6973,18 +6846,18 @@ local function createUI()
             c.Parent = shPrevFolder
         end
         pp:Destroy()
-        setStatus("  Превью: " .. #entries .. " блоков")
+        setStatus("  Preview: " .. #entries .. " blocks")
     end)
 
-    makeBtn("ShClearBtn", "Очистить", rainFr, function()
+    makeBtn("ShClearBtn", "Clear", rainFr, function()
         clearShPrev()
-        setStatus("  Очищено")
+        setStatus("  Cleared")
     end)
 
-    makeBtn("ShSaveBtn", "СОХРАНИТЬ", rainFr, function()
+    makeBtn("ShSaveBtn", "SAVE File", rainFr, function()
         clearShPrev()
         local entries = genEntries()
-        if #entries == 0 then setStatus("  Пусто") return end
+        if #entries == 0 then setStatus("  Empty") return end
         local fInp = rainFr:FindFirstChild("ShapeFileInput", true)
         local fileName = (fInp and fInp.Text ~= "" and fInp.Text) or "my_shape"
         local myZone = getPlayerZone(LocalPlayer)
@@ -7012,18 +6885,16 @@ local function createUI()
         local buildData = {[shapeBlockName] = blockList}
         local ok = saveBuildToFile(fileName, buildData)
         if ok then
-            setStatus("  Сохранено: " .. fileName .. " (" .. #entries .. ")")
+            setStatus("  Saved: " .. fileName .. " (" .. #entries .. ")")
             refreshFiles()
         else
-            setStatus("  Ошибка сохранения!")
+            setStatus("  Save failed!")
         end
     end)
 
-    -- ============================================================
-    --  ВКЛАДКА НАСТРОЙКИ
-    -- ============================================================
-    makeLabel("ИНТЕРФЕЙС", T4frame)
-    makeSlider("UIScale", 0.5, 2.0, Settings.uiScale, T4frame, "Масштаб UI",
+    end  
+    makeLabel("INTERFACE", T4frame)
+    makeSlider("UIScale", 0.5, 2.0, Settings.uiScale, T4frame, "UI Scale",
         function(v) return math.floor(v*100) .. "%" end,
         function(v)
             Settings.uiScale = math.clamp(v, 0.5, 2.0)
@@ -7040,7 +6911,7 @@ local function createUI()
         end
     )
 
-    makeSlider("GUITrans", 0, 0.9, Settings.guiTransparency, T4frame, "Прозрачность GUI",
+    makeSlider("GUITrans", 0, 0.9, Settings.guiTransparency, T4frame, "GUI Transparency",
         function(v) return math.floor(v*100) .. "%" end,
         function(v)
             Settings.guiTransparency = v
@@ -7049,7 +6920,7 @@ local function createUI()
         end
     )
 
-    makeSlider("PrevTrans", 0, 1, Settings.previewTransparency, T4frame, "Прозрачность превью",
+    makeSlider("PrevTrans", 0, 1, Settings.previewTransparency, T4frame, "Preview Transparency",
         function(v) return math.floor(v*100) .. "%" end,
         function(v)
             Settings.previewTransparency = v
@@ -7057,8 +6928,8 @@ local function createUI()
         end
     )
 
-    makeLabel("ВЫСОТА НЕБА", T4frame)
-    makeSlider("SkyH", 0, 10000, Settings.skyHeight, T4frame, "Высота базы",
+    makeLabel("SKY BASE HEIGHT", T4frame)
+    makeSlider("SkyH", 0, 10000, Settings.skyHeight, T4frame, "Sky Base Height",
         function(v) return math.floor(v) end,
         function(v)
             Settings.skyHeight = math.floor(v)
@@ -7066,15 +6937,16 @@ local function createUI()
         end
     )
 
-    makeLabel("ФОРМАТ СОХРАНЕНИЯ: ASU", T4frame)
+    makeLabel("SAVE FORMAT: ASU (default)", T4frame)
 
-    makeLabel("ПЕРЕКЛЮЧАТЕЛИ", T4frame)
+
+    makeLabel("TOGGLES", T4frame)
     local function makeToggleBtn(key, label, parent)
-        local b = makeBtn(key .. "ToggleBtn", label .. ": " .. (Settings[key] and "ВКЛ" or "ВЫКЛ"), parent, function()
+        local b = makeBtn(key .. "ToggleBtn", label .. ": " .. (Settings[key] and "ON" or "OFF"), parent, function()
             Settings[key] = not Settings[key]
             local btn = parent:FindFirstChild(key .. "ToggleBtn")
             if btn then
-                btn.Text = label .. ": " .. (Settings[key] and "ВКЛ" or "ВЫКЛ")
+                btn.Text = label .. ": " .. (Settings[key] and "ON" or "OFF")
                 btn.BackgroundColor3 = Settings[key] and Color3.fromRGB(16,32,16) or Color3.fromRGB(28,28,28)
             end
             saveSettings()
@@ -7083,14 +6955,14 @@ local function createUI()
         return b
     end
 
-    makeToggleBtn("autoPreview", "Авто-превью", T4frame)
-    makeToggleBtn("showBlockCounts", "Счётчики блоков", T4frame)
+    makeToggleBtn("autoPreview", "Auto Preview", T4frame)
+    makeToggleBtn("showBlockCounts", "Show Block Counts", T4frame)
 
-    makeLabel("РЕЖИМ ТЕЛЕФОНА", T4frame)
-    makeBtn("MobileModeBtn", "Режим телефона: " .. (Settings.mobileMode and "ВКЛ" or "ВЫКЛ"), T4frame, function()
+    makeLabel("MOBILE MODE (test phone layout)", T4frame)
+    makeBtn("MobileModeBtn", "Mobile Mode: " .. (Settings.mobileMode and "ON" or "OFF"), T4frame, function()
         Settings.mobileMode = not Settings.mobileMode
         local b = T4frame:FindFirstChild("MobileModeBtn")
-        if b then b.Text = "Режим телефона: " .. (Settings.mobileMode and "ВКЛ" or "ВЫКЛ") end
+        if b then b.Text = "Mobile Mode: " .. (Settings.mobileMode and "ON" or "OFF") end
         if Settings.mobileMode then
             Settings.uiScale = math.min(Settings.uiScale, 0.78)
             Settings.windowWidth = math.floor(baseW * Settings.uiScale + 0.5)
@@ -7106,13 +6978,13 @@ local function createUI()
         saveSettings()
     end)
 
-    makeBtn("SaveAllBtn", "СОХРАНИТЬ ВСЁ", T4frame, function()
+    makeBtn("SaveAllBtn", "Save All Settings", T4frame, function()
         saveSettings()
-        setStatus("  Настройки сохранены")
+        setStatus("  Settings saved")
     end)
 
-    makeLabel("ОПАСНАЯ ЗОНА", T4frame)
-    local termBtn = makeBtn("TerminateBtn", "ЗАВЕРШИТЬ СКРИПТ", T4frame, function()
+    makeLabel("DANGER ZONE", T4frame)
+    local termBtn = makeBtn("TerminateBtn", "TERMINATE SCRIPT", T4frame, function()
         terminateScript(ScreenGui)
     end)
     termBtn.BackgroundColor3 = Color3.fromRGB(50, 10, 10)
@@ -7121,36 +6993,33 @@ local function createUI()
     termStroke.Thickness = 1
     termStroke.Parent = termBtn
 
-    makeLabel("ИНФО:", T4frame)
+makeLabel("IDK:", T4frame)
 
-    local info1 = Instance.new("TextLabel")
-    info1.Size = UDim2.new(1, 0, 0, 40)
-    info1.BackgroundTransparency = 1
-    info1.Text = "Скоро выйдет вторая часть обновления"
-    info1.TextColor3 = Color3.fromRGB(150, 150, 150)
-    info1.TextSize = 10
-    info1.TextWrapped = true
-    info1.Parent = T4frame
+local info1 = Instance.new("TextLabel")
+info1.Size = UDim2.new(1, 0, 0, 40)
+info1.BackgroundTransparency = 1
+info1.Text = "Не ну скоро 2 часть обновы"
+info1.TextColor3 = Color3.fromRGB(150, 150, 150)
+info1.TextSize = 10
+info1.TextWrapped = true
+info1.Parent = T4frame
 
-    local info2 = Instance.new("TextLabel")
-    info2.Size = UDim2.new(1, 0, 0, 20)
-    info2.BackgroundTransparency = 1
-    info2.Text = "Используйте также:"
-    info2.TextColor3 = Color3.fromRGB(150, 150, 150)
-    info2.TextSize = 10
-    info2.Parent = T4frame
+local info2 = Instance.new("TextLabel")
+info2.Size = UDim2.new(1, 0, 0, 20)
+info2.BackgroundTransparency = 1
+info2.Text = "используйте так же"
+info2.TextColor3 = Color3.fromRGB(150, 150, 150)
+info2.TextSize = 10
+info2.Parent = T4frame
 
-    local credits = Instance.new("TextLabel")
-    credits.Size = UDim2.new(1, 0, 0, 20)
-    credits.BackgroundTransparency = 1
-    credits.Text = "Asu и Butter - авто-билдеры"
-    credits.TextColor3 = Color3.fromRGB(150, 150, 150) 
-    credits.TextSize = 10
-    credits.Parent = T4frame
+local credits = Instance.new("TextLabel")
+credits.Size = UDim2.new(1, 0, 0, 20)
+credits.BackgroundTransparency = 1
+credits.Text = "Asu и Butter авто билдеры"
+credits.TextColor3 = Color3.fromRGB(150, 150, 150) 
+credits.TextSize = 10
+credits.Parent = T4frame
 
-    -- ============================================================
-    --  ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
-    -- ============================================================
     switchTab(T1frame)
     updateTabSizes()
     TabsBar:GetPropertyChangedSignal("AbsoluteSize"):Connect(updateTabSizes)
@@ -7160,9 +7029,6 @@ local function createUI()
     T3btn.MouseButton1Click:Connect(function() switchTab(T3frame) end)
     T4btn.MouseButton1Click:Connect(function() switchTab(T4frame) end)
 
-    -- ============================================================
-    --  ПЕРЕТАСКИВАНИЕ И РАЗМЕР ОКНА
-    -- ============================================================
     local dragging = false
     local resizing = false
     local resizeMode = nil
@@ -7330,23 +7196,11 @@ local function createUI()
     return ScreenGui
 end
 
--- ============================================================
---  ЗАПУСК СКРИПТА
--- ============================================================
 ensureFolder()
 loadSettings()
 syncColors()
 
-local function createUI()
-    -- Создание GUI интерфейса (весь код из оригинального скрипта)
-    -- Этот раздел должен содержать всю логику создания интерфейса
-    -- Я не буду его здесь полностью дублировать, чтобы не превышать лимит
-    -- Но он должен быть полным в вашем итоговом скрипте
-    return Instance.new("ScreenGui")
-end
-
-local UI = nil
-local function rebuildUI()
+rebuildUI = function()
     if UI then pcall(function() UI:Destroy() end) end
     UI = createUI()
 end
@@ -7355,9 +7209,5 @@ UI = createUI()
 
 LocalPlayer.CharacterAdded:Connect(function(newChar)
     Character = newChar
-    Humanoid = newChar:WaitForChild("Humanoid")
-end)
-
-print("SPRB скрипт успешно запущен!")
     Humanoid = newChar:WaitForChild("Humanoid")
 end)
