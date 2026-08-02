@@ -6072,7 +6072,7 @@ local function createUI()
 
     makeLabel("SHOP PURCHASES", miscFr)
     makeBtn("DragonH", "Dragon Harpoon", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(1534841732,"Product") end)
-    makeBtn("CookieW", "Cookie Wheels", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(1126385328,"Product") end)
+    makeBtn("CookieW", "Cookie Wheels", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(1931849988,"Product") end)
     makeBtn("MegaT", "Orange Mega Turbines", miscFr, function() workspace.PromptRobuxEvent:InvokeServer(139121474,"Product") end)
     makeBtn("PineT", "Buy Pine Tree", miscFr, function() workspace.ItemBoughtFromShop:InvokeServer("PineTree",1) end)
 
